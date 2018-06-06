@@ -1,0 +1,278 @@
+<div class="popup popup-confirm popup2" style="height: 16rem; z-index: 16">
+  <div class="content">
+    <div class="content-title">您确定要拒绝此订单吗？</div>
+    <div class="list-block media-list">
+    <ul>
+      <li>
+        <label class="label-checkbox item-content">
+          <input type="radio" name="cancelReason" value="当前较忙，赶不及前往">
+          <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+          <div class="item-inner">
+            <div class="item-title-row">
+              <div class="item-title">当前较忙，赶不及前往</div>
+            </div>
+          </div>
+        </label>
+      </li>
+      <li>
+        <label class="label-checkbox item-content">
+          <input type="radio" name="cancelReason" value="此时间段有待拍摄订单">
+          <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+          <div class="item-inner">
+            <div class="item-title-row">
+              <div class="item-title">此时间段有待拍摄订单</div>
+            </div>
+          </div>
+        </label>
+      </li>
+      <li>
+        <label class="label-checkbox item-content">
+          <input type="radio" name="cancelReason" value="时间已约满">
+          <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+          <div class="item-inner">
+            <div class="item-title-row">
+              <div class="item-title">时间已约满</div>
+            </div>
+          </div>
+        </label>
+      </li>
+      <li>
+        <label class="label-checkbox item-content">
+          <input type="radio" name="cancelReason" value="其它原因"  id="otherReason">
+          <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+          <div class="item-inner">
+            <div class="item-title-row">
+              <div class="item-title">其它原因</div>
+              <span class="note-valid valid-normal" id="noteValidMsg"></span>
+            </div>
+          </div>
+        </label>
+      </li>
+      <li class="note-li">
+        <textarea class="note-textarea" id="noteTextarea" placeholder="限 30 字"></textarea>
+      </li>
+    </ul>
+    </div>
+    <div class="row">
+      <div class="col-50"><a href="javascript:;" class="button button-confirm">确 认</a></div>
+      <div class="col-50"><a href="javascript:;" class="button button-cancel">取 消</a></div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay"></div>
+
+<script>
+  module.exports = {
+    mixins: {
+      getValue: function() {
+        var value =  this.$('input:checked').val()
+        if (value === '其它原因') {
+          return this.$('#noteTextarea').val().trim()
+        }
+        return value
+      },
+
+      show: function() {
+        $.popup('.popup2')
+        this.$('.modal-overlay').addClass('modal-overlay-visible')
+      },
+
+      hide: function() {
+        this.$('.modal-overlay').removeClass('modal-overlay-visible')
+        $.closeModal('.popup2')
+      } 
+    },
+
+    events: {
+      'click .button-confirm': 'confirm',
+      'click .button-cancel': 'cancel',
+      'click .modal-overlay': 'cancel',
+      'click #noteTextarea': 'clickTextarea',
+      'input #noteTextarea': 'textareaHandle',
+      'change input[name="cancelReason"]': 'toggleReason'
+    },
+
+    handle: {
+      confirm: function() {
+        this.trigger('confirm')
+      }, 
+      
+      cancel: function() {
+        this.trigger('cancel')
+        this.hide()
+      },
+
+      clickTextarea: function() {
+        this.$('input[name="cancelReason"]').last().prop('checked', true)
+      },
+
+      textareaHandle: function(e) {
+        var $note = $(e.target)
+        var maxLen = 30
+        var noteLen = $note.val().length
+        if (noteLen > maxLen) {
+          this.$('#noteValidMsg').addClass('note-valid-error').text('已超出 ' + (noteLen - maxLen) + ' 字')
+        } else {
+          this.$('#noteValidMsg').removeClass('note-valid-error').text('还可以输入 ' + (maxLen - noteLen) + ' 字')
+        }
+      },
+
+      toggleReason: function(e) {
+        var $target = $(e.currentTarget)
+        var $noteTextarea = this.$('#noteTextarea')
+        if ($target.val() === '其它原因') {
+          return $noteTextarea.focus()
+        }
+        $noteTextarea.val('').blur()
+        this.$('#noteValidMsg').removeClass('note-valid-error').text('')
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .popup-confirm {
+    top: initial;
+    bottom: 0;
+  }
+
+  .popup-confirm .content {
+    text-align: center;
+    color: #7b7f83;
+    font-size: 0.7rem;
+    font-weight: 400;
+  }
+
+  .popup-confirm .content-title {
+    padding: 0.35rem;
+    box-shadow: 0 1px 0 #dddddd;
+    font-weight: 700;
+  }
+
+  .popup-confirm .row {
+    padding: 0 0.5rem;
+  }
+
+  .popup-confirm .button {
+    font-size: 0.6rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+    height: 1.5rem;
+    color: #ffffff;
+  }
+
+  .popup-confirm .button-confirm {
+    border-radius: 6px;
+    background-color: #25ae5f;
+    border-color: #25ae5f;
+  }
+
+  .popup-confirm .button-cancel {
+    border-radius: 6px;
+    background-color: #ff9911;
+    border-color: #ff9911;
+  }
+
+  .list-block .item-content {
+    min-height: 1.6rem;
+    padding-left: 1.5rem;
+  }
+
+  /* @media only screen and (max-width: 320px) {
+    .list-block .item-content {
+      padding-left: 6rem;
+    }
+  } */
+
+  .popup-confirm .item-inner {
+    min-height: 1.6rem;
+    line-height: 1.6rem;
+    padding: 0;
+  }
+
+  .list-block.media-list {
+    padding: 0.4rem 0;
+    background: #efeff4;
+  }
+
+  .list-block ul:before, .list-block ul:after, .list-block .item-inner:after {
+    content: initial;
+  }
+
+  .list-block ul {
+    background: #efeff4;
+  }
+
+  .list-block .item-media+.item-inner {
+    margin-left: 0.4rem;
+  }
+
+  .list-block.media-list .item-media {
+    padding: 0;
+  }
+
+  .popup-confirm .item-title {
+    font-size: 0.7rem;
+
+    padding-top: 0.3rem;
+  }
+
+  label.label-checkbox input[type=checkbox]:checked+.item-media i.icon-form-checkbox, label.label-checkbox input[type=radio]:checked+.item-media i.icon-form-checkbox {
+    background: #25ae5f;
+  }
+
+  label.label-checkbox i.icon-form-checkbox {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 0.8rem;
+  }
+
+  .row .col-50 {
+    margin-top: 0.6rem;
+  }
+  
+  .modal-overlay {
+    z-index: 15;
+    display: none;
+  }
+
+  .modal-overlay-visible {
+    display: block;
+  }
+
+  .note-li {
+    padding: 0 1.5rem;
+  }
+
+  .note-title {
+    padding: 0.2rem 0;
+    padding-top: 0.4rem;
+    font-size: 0.7rem;
+    text-align: left;
+    color: #a6a6a6;
+  }
+
+  .note-valid {
+    color: #7b7f83;
+    float: right;
+    font-size: 0.7rem;
+    margin-top: 0.3rem;
+    margin-right: 1rem;
+  }
+
+  .note-valid-error {
+    color: #ff0000;
+  }
+
+  .note-textarea {
+    font-size: 0.7rem;
+    line-height: 1rem;
+    height: 3rem;
+    margin: 0 0 0.3rem 0;
+    background: #E0E0E0;
+    border-radius: 3px;
+    padding: 0.3rem;
+  }
+
+  
+</style>

@@ -1,0 +1,110 @@
+<!-- Slider main container -->
+<div class="swiper-container" id="previewSwiper">
+  <!-- Additional required wrapper -->
+  <div class="swiper-wrapper">
+    <!-- Slides -->
+    {{~data.imgArray :value:index}}
+    <div class="swiper-slide">
+      <div class="preview-img-box">
+        <img data-src="{{!value.url}}">
+      </div>
+    </div>
+    {{~}}
+  </div>
+  <!-- <a href="javascript:;" class="btn-download" id="downLoad">
+    <i class="icon icon-xiazai"></i>
+  </a> -->
+</div>
+
+<script>
+  var coala = require('coala');
+  var Swiper = require('swiper/dist/js/swiper');
+  var config = require('../../utils/config');
+  require('swiper/dist/css/swiper.css');
+
+  module.exports = {
+    listen: {
+      mount: function () {
+        this.render();
+        $.each(this.$('img[data-src]'), function () {
+          var $self = $(this);
+          config.imgLoad($self, $self.data('src'));
+        });
+      }
+    },
+    mixins: {
+      render: function () {
+        var _this = this;
+
+        // init swiper
+        if (this.layerSwiper) this.layerSwiper.destroy();
+
+        this.layerSwiper = new Swiper('#previewSwiper', {
+          initialSlide: _this.data.initialSlide,
+        });
+      }
+    },
+    events: {
+      'click #previewSwiper': 'hide'
+    },
+    handle: {
+      hide: function (e) {
+        coala.cr.back();
+      }
+    }
+  }
+</script>
+<style scoped>
+  .swiper-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 999;
+    /* width: 100%;
+    height: 100%; */
+    background-color: #000;
+  }
+
+  .swiper-slide {
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .preview-img-box {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .preview-img-box img {
+    max-width: 100%;
+    margin: auto;
+  }
+
+  /* .btn-download {
+    position: fixed;
+    z-index: 999;
+    bottom: 3rem;
+    right: 0.325rem;
+    width: 2.85rem;
+    height: 2.85rem;
+    line-height: 2.85rem;
+    border-radius: 50%;
+    text-align: center;
+    background-color: #808080;
+  }
+
+  .btn-download .icon {
+    font-size: 1.75rem;
+    color: #FFF;
+  } */
+</style>

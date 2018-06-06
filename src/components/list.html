@@ -1,0 +1,218 @@
+<div class="list-block media-list">
+  <ul>
+    {{~data.items :item :idx}}
+    <div class="item" data-id="{{!item.id}}">
+      <div class="item-title"><span class="garden ellipsis">{{!item.gardenName}}</span> <span class="build ellipsis">{{!item.buildName}}</span> <span class="ellipsis">{{!item.unitName}}</span> <span class="ellipsis">{{!item.roomNumber}}</span></div>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-subtitle">{{!item.appointmentName}} {{!item.appointmentPhone}}<br>订单编号：{{!item.appointmentNo}}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-info" style="padding-top: {{!data.showDate ? 0.5 : 0.75}}rem;">
+            <span class="item-time">{{!(item.hour || '00') + ':' + (item.minute  || '00')}}</span>{{?item.isConflictTime}}<span class="item-warn">!</span>{{?}}
+            {{?data.showDate}}<br><span class="item-date">{{!item.dayLabel}} <span>({{!item.month}}月{{!item.day}}日)</span></span>{{?}}
+          </div>
+          <div class="item-ops">
+            <a class="icon icon-call" href="javascript:;" data-href="tel:{{!item.appointmentPhone}}"></a>
+            <a class="icon icon-jie" data-id={{!item.id}}></a>
+          </div>
+        </div>
+      </li>
+    </div>
+    {{~}}
+  </ul>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: {
+      items: [],
+      showDate: false
+    },
+
+    events: {
+      'click div.item': 'openDetail',
+      'click .icon-call': 'call',
+      'click .icon-jie': 'ordering'
+    },
+
+    handle: {
+      openDetail: function (e) {
+        // 判断解决事件冒泡的问题，sui 的点透问题还是存在
+        if (e.target.tagName != 'A') {
+          if (this.parent.modal) $.closeModal(this.parent.modal)
+          coala.cr.go('/detail/' + $(e.currentTarget).data('id'))
+        }
+      },
+
+      call: function (e) {
+        location.href = $(e.target).data('href')
+      },
+
+      ordering: function (e) {
+        var _this = this
+        var id = $(e.target).data('id')
+        $.showIndicator()
+        $.ajax({
+          data: {
+            personId: coala.personId,
+            id: id
+          },
+          url: config.apiUrl + 'isReceiveBill'
+        }).done(function(result) {
+          $.hideIndicator()
+          if (result.code == 'C0000') {
+            if (_this.parent.modal) $.closeModal(_this.parent.modal)
+            coala.curOrder = {
+              status: 'WAITING_ORDER',
+              id: id
+            }
+            coala.cr.go('/form')
+          } else {
+            $.toast(result.msg)
+          }
+        })
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .list-block {
+    margin: 0
+  }
+  
+  .item-inner {
+    align-self: flex-start;
+  }
+
+  .list-block .item-content {
+    padding-left: 0.5rem;
+  }
+
+  .list-block .item-content:after {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0;
+    right: auto;
+    top: auto;
+    height: 1px;
+    width: calc(100% - 0.5rem);
+    background-color: #e7e7e7;
+    display: block;
+    z-index: 15;
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+
+  .list-block.media-list .item-inner {
+    padding-top: 0;
+    padding-bottom: 0.7rem;
+  }
+
+  .list-block .item-inner:after {
+    background-color: #ffffff;
+  }
+
+  .item-title {
+    color: #2e2e2e;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 400;
+    padding-left: 0.5rem;
+    padding-top: 0.8rem;
+  }
+
+  .item-subtitle {
+    color: #a6a6a6;
+    font-size: 0.6rem;
+    line-height: 0.85rem;
+    padding-top: 0.3rem;
+    font-weight: 400;
+  }
+  
+  .item-right {
+    margin-right: 0.5rem;
+    align-self: flex-start;
+    padding-bottom: 0.45rem;
+    width: 16rem;
+    clear: both;
+  }
+
+  .item-info {
+    display: inline-block;
+    line-height: 0.6rem;
+    padding-top: 0.5rem;
+    vertical-align: bottom;
+  }
+  
+  .item-ops {
+    font-size: 1.2rem;
+    text-align: right;
+    width: 3.5rem;
+    display: inline-block;
+    padding-top: 0.15rem;
+    float: right;
+  }
+
+  .item-time {
+    color: #ff9911;
+    font-size: 0.8rem;
+    line-height: 0.75rem;
+    font-weight: 700;
+    margin-right: 0.3rem;
+  }
+
+  .item-date {
+    font-size: 0.55rem;
+    color: #2e2e2e;
+  }
+
+  .item-date span {
+    color: #a6a6a6;
+  }
+
+  .item-warn {
+    font-size: 0.8rem;
+    line-height: 0.8rem;
+    font-weight: 900;
+    color: #ff0000;
+    margin-right: 0.75rem;
+  }
+  
+  .item-ops .icon {
+    font-size: 0.6rem;
+    height: 1.25rem;
+    line-height: 1.2rem;
+    width: 1.25rem;
+    border-radius: 50%;
+    text-align: center;
+    border: 1px solid #ff9911;
+    color: #ff9911;
+  }
+
+  .item-ops .icon-call {
+    border: 1px solid #25ae5f;
+    color: #25ae5f;
+    margin-right: 0.5rem;
+  }
+
+  .item-title .ellipsis {
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+
+  .item-title .garden {
+    max-width: 4.7rem;
+  }
+
+  .item-title .build {
+    max-width: 3.75rem;
+  }
+</style>

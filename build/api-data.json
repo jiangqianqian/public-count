@@ -1,0 +1,498 @@
+{
+  "getAppointmentBills": {
+    "data": {
+      "pageCount": 3,
+      "count": 1,
+      "todayData": {
+        "date": "2017-03-15",
+        "items": [
+          {
+            "appointmentNo": "SAP20170306000803",
+            "appointmentName": "唐测试八勿动",
+            "gardenName": "翡翠名园",
+            "buildName": "60",
+            "appointmentPhone": "13787652534",
+            "roomNumber": "401",
+            "appointmentTime": "2017-03-15 19:52:46",
+            "isConflictTime": false
+          },
+          {
+            "appointmentNo": "SAP20170306000803",
+            "appointmentName": "唐测试八勿动",
+            "gardenName": "翡翠名园",
+            "buildName": "60",
+            "appointmentPhone": "13787652534",
+            "roomNumber": "401",
+            "appointmentTime": "2017-03-15 19:52:46",
+            "isConflictTime": false
+          },
+          {
+            "appointmentNo": "SAP20170306000803",
+            "appointmentName": "唐测试八勿动",
+            "gardenName": "翡翠名园",
+            "buildName": "60",
+            "appointmentPhone": "13787652534",
+            "roomNumber": "401",
+            "appointmentTime": "2017-03-15 19:52:46",
+            "isConflictTime": false
+          },
+          {
+            "appointmentNo": "SAP20170306000803",
+            "appointmentName": "唐测试八勿动",
+            "gardenName": "翡翠名园",
+            "buildName": "60",
+            "appointmentPhone": "13787652534",
+            "roomNumber": "401",
+            "appointmentTime": "2017-03-15 19:52:46",
+            "isConflictTime": true
+          },
+          {
+            "appointmentNo": "SAP20170306000803",
+            "appointmentName": "唐测试八勿动",
+            "gardenName": "翡翠名园",
+            "buildName": "60",
+            "appointmentPhone": "13787652534",
+            "roomNumber": "401",
+            "appointmentTime": "2017-03-15 19:52:46",
+            "isConflictTime": true
+          }
+        ]},
+        "tomorrowData": {
+        "date": "2017-03-16",
+        "items": [
+          {
+              "appointmentNo": "SAP20170306000803",
+              "appointmentName": "唐测试八勿动",
+              "gardenName": "翡翠名园",
+              "buildName": "60",
+              "appointmentPhone": "13787652534",
+              "roomNumber": "401",
+              "appointmentTime": "2017-03-15 19:52:46",
+              "isConflictTime": true
+            },
+            {
+              "appointmentNo": "SAP20170306000803",
+              "appointmentName": "唐测试八勿动",
+              "gardenName": "翡翠名园",
+              "buildName": "60",
+              "appointmentPhone": "13787652534",
+              "roomNumber": "401",
+              "appointmentTime": "2017-03-15 19:52:46",
+              "isConflictTime": true
+            },
+            {
+              "appointmentNo": "SAP20170306000803",
+              "appointmentName": "唐测试八勿动",
+              "gardenName": "翡翠名园",
+              "buildName": "60",
+              "appointmentPhone": "13787652534",
+              "roomNumber": "401",
+              "appointmentTime": "2017-03-15 19:52:46",
+              "isConflictTime": true
+            },
+            {
+              "appointmentNo": "SAP20170306000803",
+              "appointmentName": "唐测试八勿动",
+              "gardenName": "翡翠名园",
+              "buildName": "60",
+              "appointmentPhone": "13787652534",
+              "roomNumber": "401",
+              "appointmentTime": "2017-03-15 19:52:46",
+              "isConflictTime": true
+            },
+            {
+              "appointmentNo": "SAP20170306000803",
+              "appointmentName": "唐测试八勿动",
+              "gardenName": "翡翠名园",
+              "buildName": "60",
+              "appointmentPhone": "13787652534",
+              "roomNumber": "401",
+              "appointmentTime": "2017-03-15 19:52:46",
+              "isConflictTime": true
+            }
+        ]
+      },
+      "pageSize": 10,
+      "currentPage": 1
+    },
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "receiveAppointmentBill": {
+    "data": {},
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "rejectAppointmentBill": {
+    "data": {},
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "cancelBillForCameraman": {
+    "data": {},
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "getDetailForCameraman": [
+    {
+      "data": {
+        "appointmentNo": "AP201703020001",
+        "gardenName": "西城上筑",
+        "buildName": "A座",
+        "roomNumber": "302",
+        "appointmentTime": "2017-03-15 14:20:00",
+        "roomArea": 87,
+        "bedRoom": 2,
+        "livingRoom": 1,
+        "bathRoom": 2,
+        "descToCameraman": "业主即将要离开深圳，比较急急急急急急急，麻烦尽快接单。",
+        "appointmentPersonId": "1bf9730b-fad3-4821-8f0a-206389480db6",
+        "appointmentName": "赵又挺",
+        "appointmentPhone": "13765261234",
+        "gardenAddress": "福田区香蜜湖深南大道与农林路交汇处",
+        "beginShootTime": "17:30",
+        "beginShootTimeDetail": "2017-03-15 17:30:00",
+        "endShootTime": "18:00",
+        "endShootTimeDetail": "2017-03-15 18:00:00",
+        "finishedShootTime": "20:00",
+        "finishedShootTimeDetail": "2017-03-15 20:00:00",
+        "uploadTime": "20:05",
+        "uploadTimeDetail": "2017-03-15 20:05:00",
+        "auditTime": "20:10",
+        "auditTimeDetail": "2017-03-15 20:10:00",
+        "status": "new",
+        "statusDesc": "审核通过",
+        "gardenLongitude": 114.038708,
+        "gardenLatitude": 22.545607,
+        "headUrl": "http://s200.qfangimg.com/beijing/hr/2016/11/30/390x520/4b4e9b86-ee73-4ca2-b497-f0446864d28c.jpg",
+        "branchName": "金域蓝湾三分店",
+        "conflictBills": "SK201702022314",
+        "isConflictTime": true
+      },
+      "code": "C0000",
+      "msg": "成功"
+    },
+    {
+      "data": {
+        "appointmentNo": "AP201703020002",
+        "gardenName": "西城上筑",
+        "buildName": "A座",
+        "roomNumber": "302",
+        "appointmentTime": "2017-03-15 14:20:00",
+        "roomArea": 87,
+        "bedRoom": 2,
+        "livingRoom": 1,
+        "bathRoom": 2,
+        "descToCameraman": "业主即将要离开深圳，比较急急急急急急急，麻烦尽快接单。",
+        "appointmentPersonId": "1bf9730b-fad3-4821-8f0a-206389480db6",
+        "appointmentName": "赵又挺",
+        "appointmentPhone": "13765261234",
+        "gardenAddress": "福田区香蜜湖深南大道与农林路交汇处",
+        "beginShootTime": "17:30",
+        "beginShootTimeDetail": "2017-03-15 17:30:00",
+        "endShootTime": "18:00",
+        "endShootTimeDetail": "2017-03-15 18:00:00",
+        "finishedShootTime": "20:00",
+        "finishedShootTimeDetail": "2017-03-15 20:00:00",
+        "uploadTime": "20:05",
+        "uploadTimeDetail": "2017-03-15 20:05:00",
+        "auditTime": "20:10",
+        "auditTimeDetail": "2017-03-15 20:10:00",
+        "status": "canceled",
+        "statusDesc": "临时有事，取消单据",
+        "gardenLongitude": 114.038708,
+        "gardenLatitude": 22.545607,
+        "headUrl": "http://s200.qfangimg.com/beijing/hr/2016/11/30/390x520/4b4e9b86-ee73-4ca2-b497-f0446864d28c.jpg",
+        "branchName": "金域蓝湾三分店",
+        "conflictBills": "SK201702022314",
+        "isConflictTime": true
+      },
+      "code": "C0000",
+      "msg": "成功"
+    }
+  ],
+  "getWaitingShoots": {
+    "data": {
+      "pageCount": 3,
+      "count": 1,
+      "data": [
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "15",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "15",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "15",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "14",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "14",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "13",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "13",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "6",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "6",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        },
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "endMinute": "60",
+          "day": "6",
+          "endHour": "4",
+          "appointmentName": "唐八动",
+          "gardenName": "翡翠xxx名园",
+          "buildName": "60",
+          "beginHour": "4",
+          "shootEndTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "roomNumber": "401",
+          "year": "2017",
+          "beginMinute": "52",
+          "shootBeginTime": "2017-03-06 16:52:46"
+        }
+      ],
+      "pageSize": 10,
+      "currentPage": 1
+    },
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "getShooteds": {
+    "data": {
+      "pageCount": 1,
+      "count": 1,
+      "data": [],
+      "data2": [
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "day": "6",
+          "appointmentName": "唐测试八勿动",
+          "gardenName": "翡翠名园",
+          "buildName": "60",
+          "statusDesc": "待上传",
+          "status": "WAITING_UPLOAD",
+          "second": "46",
+          "hour": "7",
+          "appointmentPhone": null,
+          "roomNumber": "401",
+          "year": "2017",
+          "minute": "52",
+          "finishedTime": "2017-03-06 19:52:46"
+        }
+      ],
+      "pageSize": 10,
+      "currentPage": 1
+    },
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "getCanceleds": {
+    "data": {
+      "pageCount": 1,
+      "count": 1,
+      "data": [],
+      "data2": [
+        {
+          "appointmentNo": "SAP20170306000803",
+          "month": "3",
+          "day": "6",
+          "gardenName": "翡翠名园翡翠好园翡翠靓园",
+          "buildName": "60栋123单元",
+          "second": "46",
+          "minute": "52",
+          "hour": "4",
+          "reason": "临时有事，取消单据",
+          "roomNumber": "401",
+          "year": "2017",
+          "appointmentShootTime": "2017-03-06 16:52:46",
+          "appointmentPhone": "13376524556",
+          "appointmentName": "唐八勿动"
+        }
+      ],
+      "pageSize": 10,
+      "currentPage": 1
+    },
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "getMyBillInfo": {
+    "data": {
+      "personId": "eessefe989f56s5f65s8df95f4s",
+      "accountId": "ddepsefsle55sef5sf55s4e5f45s",
+      "name": "张三",
+      "headUrl": "http://s200.qfangimg.com/beijing/hr/2016/11/30/390x520/4b4e9b86-ee73-4ca2-b497-f0446864d28c.jpg",
+      "geographeareaId": "ddfesse66568755s54d54f75454",
+      "geographeareaName": "红树林",
+      "phone": "13655555555",
+      "waitingShoot": 0,
+      "waitingUpload": 0,
+      "notPassed": 0,
+      "canceled": 0,
+      "finished": 0,
+      "enable": true
+    },
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "getShootTimeSegment": {
+    "data": [
+      "10:30-10:50",
+      "15:10-15:20",
+      "16:00-16:10"
+    ],
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "finishShoot": {
+    "data": {},
+    "code": "C0000",
+    "msg": "成功"
+  },
+  "isReceiveBill": {
+    "data": {},
+    "code": "C0000",
+    "msg": "这个单已被接"
+  },
+  "modifyReceiveBillStatus": {
+    "data": {},
+    "code": "C0000",
+    "msg": "成功"
+  }
+}

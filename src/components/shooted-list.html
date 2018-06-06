@@ -1,0 +1,74 @@
+<div class="list-block media-list">
+  {{?data.items && data.items.length}}
+  <ul>
+    {{~data.items :item :idx}}
+    <div class="item" data-id="{{!item.id}}">
+      <div class="item-title"><span class="garden ellipsis">{{!item.gardenName}}</span> <span class="build ellipsis">{{!item.buildName}}</span> <span class="ellipsis">{{!item.unitName}}</span> <span class="ellipsis">{{!item.roomNumber}}</span></div>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-subtitle">{{!item.appointmentName}} {{!item.appointmentPhone}}<br>订单编号：{{!item.appointmentNo}}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-ops">
+            <div class="item-finishdate">{{!item.year}}年{{!item.month}}月{{!item.day}}日 {{!item.hour || '00'}}:{{!((item.minute + '').length < 2 ? '0' + item.minute : (item.minute || '00'))}}<br><span>完成拍摄时间</span></div>
+          </div>
+        </div>
+      </li>
+    </div>
+    {{~}}
+  </ul>
+  {{??}}
+  <div class="infinite-scroll-preloader scroll-loading shooted-loading">
+    <div class="preloader"></div>
+  </div>
+  {{?}}
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+  var orderMixin = require('../utils/order-mixin')
+
+  module.exports = {
+    data: function () {
+      return this.fetch()
+    },
+
+    mixins: [{
+      fetchUrl: config.apiUrl + 'getShooteds',
+      
+      fetchParams: {
+        status: 'WAITING_UPLOAD',
+        personId: coala.personId,
+        page: 1,
+        pageSize: 10
+      }
+
+    }, orderMixin],
+
+    listen: {
+      switchStatus: function(status) {
+        this.$('.shooted-loading').show()
+        this.fetchParams.status = status
+        this.refresh()
+      },
+
+      mount: function() {
+        this.parent.data.tabIndex == '2' ? this.parent.$('.status').show() : this.parent.$('.status').hide()
+      }
+    },
+
+    events: {
+      'click div.item': 'openDetail',
+    },
+
+    handle: {
+      openDetail: function (e) {
+        // 判断解决事件冒泡的问题，sui 的点透问题还是存在
+       if (e.target.tagName != 'A') {
+         coala.cr.go('/detail/' + $(e.currentTarget).data('id'))
+       }
+      }
+    }
+  }
+</script>

@@ -1,0 +1,139 @@
+<div class="page page-current">
+  <div id="content" class="content">
+  </div>
+  <div class="infinite-scroll-preloader scroll-loading">
+    <div class="preloader"></div>
+  </div>
+  <nav id="nav" class="bar bar-tab"></nav>
+</div>
+<script>
+  module.exports = {
+    refs: {
+      nav: {
+        el: '#nav',
+        component: require('../components/nav.html')
+      },
+      content: {
+        el: '#content',
+        component: require('../components/profile-info.html')
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .header {
+    padding: 0.5rem;
+  }
+
+  .list-block {
+    margin: 0;
+  }
+
+  .list-block.media-list ul {
+    background-color: #25ae5f;
+  }
+
+  .list-block .item-content {
+    padding-left: 0.5rem;
+  }
+
+  .list-block .item-inner {
+    padding-bottom: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .list-block .item-media+.item-inner {
+    margin-left: 0.5rem;
+  }
+
+  .item-media img {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+  }
+
+  .media-list .item-title {
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 300;
+  }
+
+
+  .media-list .item-title span {
+    font-size: 0.6rem;
+  }
+
+  .header .item-area {
+    font-size: 0.55rem;
+    color: #99ffcc;
+  }
+
+  .record-order .item-title {
+    color: #2e2e2e;
+    background: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 400;
+  }
+
+  .record-title {
+    color: #2e2e2e;
+    font-size: 0.8rem;
+    font-weight: 400;
+    width: 3.15rem;
+    height: 2.65rem;
+    line-height: 2.65rem;
+    border: 1px solid #f1f1f1;
+  }
+
+  @media only screen and (max-width: 320px) {
+    .record-title {
+      width: 2.6rem;
+      height: 2.1rem;
+      line-height: 2.1rem;
+    }
+  }
+
+  .record-order {
+    background: #fff;
+    margin: 0.5rem 0;
+  }
+
+  .record-order .row {
+    text-align: center;
+    padding: 0.5rem 0 0 0.5rem;
+    margin-left: 0;
+  }
+
+  .record-order .row .col-20 {
+    width: initial;
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+
+  .record-subtitle {
+    color: #666666;
+    font-size: 0.6rem;
+    font-weight: 400;
+    padding: 0.4rem 0;
+    border: 1px solid #f1f1f1;
+    border-top-color: #ffffff;
+    margin-bottom: 0.75rem;
+  }
+
+  .status-title {
+    color: #2e2e2e;
+    font-size: 0.7rem;
+    font-weight: 400;
+  }
+
+  .label-record {
+    margin-bottom: 0.5rem;
+  }
+
+  .label-record .num {
+    margin-left: 10px;
+    color: #999;
+  }
+
+</style>

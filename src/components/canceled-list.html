@@ -1,0 +1,52 @@
+{{~data.items :item :idx}}
+<div class="list-block media-list list-cancel-block item" data-id="{{!item.id}}">
+  <div class="item-title"><span class="garden ellipsis">{{!item.gardenName}}</span> <span class="build ellipsis">{{!item.buildName}}</span> <span class="ellipsis">{{!item.unitName}}</span> <span class="ellipsis">{{!item.roomNumber}}</span></div>
+  <div class="item-content">
+    <div class="item-inner">
+      <div class="item-subtitle">{{!item.appointmentName}} {{!item.appointmentPhone}}<br>订单编号：{{!item.appointmentNo}}</div>
+    </div>
+    <div class="item-right">
+      <div class="item-ops">
+        <div class="item-canceldate">{{!item.hour || '00'}}:{{!((item.minute + '').length < 2 ? '0' + item.minute : (item.minute || '00'))}}<br><span>{{!item.month}}月{{!item.day}}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="item-desc">取消原因：{{!item.reason}}</div>
+</div>
+{{~}}
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+  var orderMixin = require('../utils/order-mixin')
+
+  module.exports = {
+    data: function () {
+      return this.fetch()
+    },
+
+    mixins: [{
+      fetchUrl: config.apiUrl + 'getCanceleds',
+      
+      fetchParams: {
+        personId: coala.personId,
+        page: 1,
+        pageSize: 10
+      }
+
+    }, orderMixin],
+
+    events: {
+      'click div.item': 'openDetail',
+    },
+
+    handle: {
+      openDetail: function (e) {
+        // 判断解决事件冒泡的问题，sui 的点透问题还是存在
+       if (e.target.tagName != 'A') {
+         coala.cr.go('/detail/' + $(e.currentTarget).data('id'))
+       }
+      }
+    }
+  }
+</script>

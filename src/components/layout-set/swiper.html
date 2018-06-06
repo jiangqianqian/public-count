@@ -1,0 +1,478 @@
+{{?data.imgArray.length}}
+<!-- Slider main container -->
+<div class="swiper-container" id="swiperContainer">
+  <!-- Additional required wrapper -->
+  <div class="swiper-wrapper">
+    <!-- Slides -->
+    {{~data.imgArray :value:index}}
+    <div class="swiper-slide">
+      <div class="layout-info-wrap">
+        {{?value.layerCn}}
+        <span class="layout-info">{{=value.layerCn}}</span>
+        {{?}}
+        <a href="javascript:;" class="btn-check" data-index="{{=index}}">
+          <i class="icon icon-ok"></i>
+        </a>
+      </div>
+      <div class="img-box js-preview">
+        <img data-src="{{!value.httpUrl}}">
+      </div>
+    </div>
+    {{~}}
+  </div>
+  <!-- If we need pagination -->
+  <div class="swiper-pagination" id="swiperPagination"></div>
+</div>
+<div class="btn-set-bar">
+  {{?data.type === 'mount'}}
+  <a href="javascript:;" class="btn-set" id="btnMount">挂接</a>
+  {{??data.type === 'reference'}}
+  <a href="javascript:;" class="btn-set" id="btnRefer">设为参考图</a>
+  {{??}}
+  <a href="javascript:;" class="btn-set" id="btnMount">挂接</a>
+  <a href="javascript:;" class="btn-set" id="btnRefer">设为参考图</a>
+  <a href="javascript:;" class="btn-set" id="btnDraft">上传草稿图</a>
+  {{?}}
+</div>
+<div id="preview"></div>
+{{?}}
+<div class="dn" id="noLayoutImg">
+  <div class="swiper-container">
+    <div class="img-box no-img-box">
+      <img src="assets/img/logo.png">
+      <div class="no-img-text">无参考图数据</div>
+    </div>
+  </div>
+  <div class="btn-set-bar">
+    <a href="javascript:;" class="btn-set  btn-disabled">挂接</a>
+    <a href="javascript:;" class="btn-set  btn-disabled">设为参考图</a>
+    <a href="javascript:;" class="btn-set" id="btnDraft">上传草稿图</a>
+  </div>
+</div>
+
+<script>
+  var coala = require('coala');
+  var Swiper = require('swiper/dist/js/swiper');
+  var wx = require('../../assets/vendor/weixin-jssdk');
+  var config = require('../../utils/config');
+  require('swiper/dist/css/swiper.css');
+
+  module.exports = {
+    data: {
+      imgArray: []
+    },
+    listen: {
+      mount: function () {
+        this.render();
+        this.weixinJssdk();
+      },
+      showPreview: function () {
+        var _this = this;
+        var initialSlide = this.$('#swiperContainer').find('.js-preview').index(this.$previewTarget);
+
+        // 查看大图
+        if (!this.previewMd) {
+          require.ensure([], function () {
+            var preview = require('./preview.html');
+            _this.previewMd = coala.component(preview);
+            _this.previewMd.data = {
+              imgArray: _this.data.previewImgArray,
+              initialSlide: initialSlide
+            };
+            _this.previewMd.parent = _this;
+            _this.previewMd.mount('#preview');
+            _this.previewBtnChecked(_this.getCheckedImg('index'));
+          });
+        } else {
+          this.$('#preview').removeClass('dn');
+          this.previewBtnChecked(this.getCheckedImg('index'));
+          this.previewMd.layerSwiper.slideTo(initialSlide, 0);
+        }
+      },
+
+      hidePreview: function () {
+        // 隐藏图片预览
+        var $btnCheck = this.$('.btn-check');
+        $btnCheck.removeClass('checked').find('.icon').removeClass('icon-ok1');
+        var checkedImgIndexArray = this.previewMd.getCheckedImg('index');
+        for (var i = 0, len = checkedImgIndexArray.length; i < len; i++) {
+          $btnCheck.eq(checkedImgIndexArray[i]).addClass('checked').find('.icon').addClass('icon-ok1');
+        }
+        this.$('#preview').addClass('dn');
+        this.layerSwiper.slideTo(this.previewMd.layerSwiper.activeIndex, 0);
+      }
+    },
+    mixins: {
+      hasCheckedImg: function () {
+        // 点击设置户型图按钮前判断是否已选择了图片
+        if (!this.$('.btn-check.checked').length) {
+          $.toast('请选择户型图图片');
+          return false;
+        } else {
+          return true;
+        }
+      },
+      getCheckedImg: function (type) {
+        // 刷选出选中的图片数组
+        var _this = this;
+        var array = [];
+        $.each(this.$('.btn-check.checked'), function () {
+          if (type === 'index') {
+            array.push($(this).data('index'));
+          } else {
+            array.push(_this.data.imgArray[$(this).data('index')]);
+          }
+        });
+
+        return array;
+      },
+      previewBtnChecked: function (checkedImgIndexArray) {
+        var $previewBtnCheck = this.$('.preview-btn-check');
+        $previewBtnCheck.removeClass('checked');
+        for (var i = 0, len = checkedImgIndexArray.length; i < len; i++) {
+          $previewBtnCheck.eq(checkedImgIndexArray[i]).addClass('checked');
+        }
+      },
+      initSwiper: function (initialSlide) {
+        this.$('.btn-check').removeClass('checked').find('.icon').removeClass('icon-ok1');
+
+        if (this.layerSwiper) this.layerSwiper.destroy();
+
+        this.layerSwiper = new Swiper('#swiperContainer', {
+          initialSlide: initialSlide ? initialSlide : 0,
+          // If we need pagination
+          pagination: {
+            el: '#swiperPagination',
+          }
+        });
+      },
+      render: function () {
+        var _this = this;
+
+        // 请求接口返回图片库，需要排除掉已被选中的图片
+        $.ajax({
+          type: 'GET',
+          data: {
+            appointmentId: coala.surveyDetailData.id,
+            personId: coala.personId,
+          },
+          url: config.layoutUrl + 'layoutSelectView',
+          beforeSend: function () {
+            $.showIndicator();
+          },
+          complete: function () {
+            $.hideIndicator();
+          }
+        }).done(function (result) {
+          if (result.code !== 'C0000') {
+            $.toast(result.msg);
+            return;
+          }
+          _this.data.imgArray =  [].concat(JSON.parse(JSON.stringify(result.data)));
+          _this.data.previewImgArray = [].concat(JSON.parse(JSON.stringify(result.data)));
+
+          for (var i = 0, len = _this.data.imgArray.length; i < len; i++) {
+            if (_this.data.imgArray[i].httpUrl.indexOf('{size}') >= 0) {
+              _this.data.imgArray[i].httpUrl = config.repaceImgUrl(_this.data.imgArray[i].httpUrl, '400x300');
+              _this.data.previewImgArray[i].httpUrl = config.repaceImgUrl(_this.data.previewImgArray[i].httpUrl, '600x450');
+            }
+          }
+
+          _this.update();
+
+          // init swiper
+          if (_this.data.imgArray.length) {
+            _this.initSwiper();
+
+            if (_this.data.type) {
+              _this.parent.$('.continue-tips').removeClass('dn');
+            }
+
+            $.each(_this.$('img[data-src]'), function () {
+              var $self = $(this);
+              config.imgLoad($self, $self.data('src'));
+            });
+          } else {
+            if (_this.data.type) {
+              _this.parent.$('.continue-tips').addClass('dn');
+            } else {
+              _this.$('#noLayoutImg').removeClass('dn');
+            }
+          }
+        });
+      },
+      weixinJssdk: function () {
+        var _this = this;
+
+        // 获取微信权限
+        config.getConfigItems().done(function (result) {
+          if (result.code !== 'C0000') {
+            return;
+          }
+          wx.config({
+            // debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+            appId: result.data.appId, // 必填，公众号的唯一标识
+            timestamp: result.data.timestamp, // 必填，生成签名的时间戳
+            nonceStr: result.data.nonceStr, // 必填，生成签名的随机串
+            signature: result.data.signature, // 必填，签名
+            jsApiList: ['chooseImage', 'getLocalImgData'] // 必填，需要使用的JS接口列表
+          });
+        });
+
+        wx.ready(function () {
+          _this.$('#btnDraft').on('click', function (e) {
+            var base64Array = [];
+            wx.chooseImage({
+              // count: 1, //默认9
+              sizeType: ['original', 'compressed'], //可以指定是原图还是压缩图，默认二者都有
+              sourceType: ['album', 'camera'], //可以指定来源是相册还是相机，默认二者都有
+              success: function (res) {
+                var localIds = res.localIds; //返回选定照片的本地ID列表，localId可以作为img标签的src属性显示图片
+                var i = 0;
+                var len = localIds.length;
+
+                function push() {
+                  wx.getLocalImgData({
+                    localId: localIds[i],
+                    success: function (res) {
+                      // 取到 base64 形式的图片
+                      i++;
+                      var localData = window.__wxjs_is_wkwebview ? res.localData : 'data:image/jpeg;base64,' + res.localData;
+                      base64Array.push(encodeURIComponent(localData));
+                      if (i < len) {
+                        push();
+                      } else {
+                        // 通过 base64 获取图片路径
+                        var formData = new FormData();
+                        formData.append('imageFile', base64Array.join(','));
+                        $.ajax({
+                          type: 'POST',
+                          url: '/upload/upload/base64Str.json?imageType=1&appName=survey&base64=true',
+                          data: formData,
+                          processData: false,
+                          contentType: false,
+                          beforeSend: function () {
+                            $.showIndicator();
+                          },
+                          complete: function () {
+                            $.hideIndicator();
+                          }
+                        }).done(function (data) {
+                          if (data.state !== 'success') {
+                            $.toast(data.msg);
+                            return;
+                          }
+
+                          var layoutSelects = [];
+
+                          for (var i = 0, len = data.imageFiles.length; i < len; i++) {
+                            layoutSelects.push({
+                              uploadDraftUrl: data.imageFiles[i].fileUri,
+                              uploadDraftHttpUrl: config.repaceImgUrl(data.imageFiles[i].accessUrl, '400x300'),
+                              imageIdc: data.imageFiles[i].storeArea,
+                              layer: 1
+                            });
+                          }
+                          _this.parent.showDraft({ layoutSelects: layoutSelects });
+                        });
+                      }
+                    }
+                  });
+                }
+                push();
+              }
+            });
+          });
+        });
+
+        wx.error(function (res) {
+          // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。
+          $.alert(JSON.stringify(res));
+        });
+      }
+    },
+    events: {
+      'click #swiperContainer .btn-check': 'checkImg',
+      'click #btnMount': 'mount',
+      'click #btnRefer': 'refer',
+      'click .js-preview': 'preview'
+    },
+    handle: {
+      checkImg: function (e) {
+        this.$(e.currentTarget).toggleClass('checked').find('.icon').toggleClass('icon-ok1');
+      },
+      mount: function () {
+        // 挂接子组件
+        if (this.hasCheckedImg()) {
+          // 深拷贝
+          var layoutSelects = [].concat(JSON.parse(JSON.stringify(this.getCheckedImg())));
+
+          // 将数据处理成跟 setUpLayout 接口的请求参数一致
+          for (var i = 0, len = layoutSelects.length; i < len; i++) {
+            // 如果没有数据，默认为一层
+            if (!layoutSelects[i].layer || layoutSelects[i].layer === '') {
+              layoutSelects[i].layer = 1;
+            }
+            layoutSelects[i].hookId = layoutSelects[i].id; // 重新拿图片库时作排除用
+            layoutSelects[i].hookHttpUrl = layoutSelects[i].httpUrl; // 在 mount.html 作图片展示用
+            layoutSelects[i].hookUrl = layoutSelects[i].fastDfsUrl; // 提交时传参数用
+          }
+
+          if (this.data.type) {
+            // 页面现在是继续挂接页面
+            this.parent.reRender({
+              layoutSelects: layoutSelects
+            });
+          } else {
+            // 页面现在是从实勘详情中的 ”设置户型图“ 进入的轮播页面
+            this.parent.showMount({
+              layoutSelects: layoutSelects
+            });
+          }
+        }
+      },
+      refer: function () {
+        if (this.hasCheckedImg()) {
+          var layoutSelects = [].concat(JSON.parse(JSON.stringify(this.getCheckedImg())));
+
+          // 将数据处理成跟 setUpLayout 接口的请求参数一致
+          for (var i = 0, len = layoutSelects.length; i < len; i++) {
+            // 如果没有数据，默认为一层
+            if (!layoutSelects[i].layer || layoutSelects[i].layer === '') {
+              layoutSelects[i].layer = 1;
+            }
+            layoutSelects[i].originalReferenceId = layoutSelects[i].id;
+            layoutSelects[i].originalReferenceHttpUrl = layoutSelects[i].httpUrl;
+            layoutSelects[i].originalReferenceUrl = layoutSelects[i].fastDfsUrl;
+          }
+
+          if (this.data.type) {
+            // 页面现在是继续挂接页面
+            this.parent.reRender({
+              layoutSelects: layoutSelects
+            });
+          } else {
+            // 页面现在是从实勘详情中的 ”设置户型图“ 进入的轮播页面
+            this.parent.showRefer({
+              layoutSelects: layoutSelects
+            });
+          }
+        }
+      },
+      preview: function (e) {
+        this.$previewTarget = this.$(e.currentTarget);
+        coala.cr.go('/layout-set/preview');
+      }
+    }
+  }
+</script>
+<style scoped>
+  .swiper-pagination-bullet-active {
+    opacity: 1;
+    background: #5F5F5F;
+  }
+
+  .swiper-container {
+    width: 100%;
+    background-color: #FFF;
+  }
+
+  .layout-info-wrap {
+    position: relative;
+    text-align: right;
+  }
+
+  .layout-info {
+    position: absolute;
+    top: 0.325rem;
+    left: 0.625rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    height: 1.725rem;
+    line-height: 1.725rem;
+    color: #FFF;
+    font-size: 0.6rem;
+    background-color: #606060;
+    border-radius: 0.875rem;
+  }
+
+  .btn-check {
+    display: inline-block;
+    margin-top: 0.7rem;
+    margin-right: 0.625rem;
+  }
+
+  .btn-check .icon {
+    font-size: 1.1rem;
+    color: #A7A7A7;
+  }
+
+  .btn-check.checked .icon {
+    color: #25AE5F;
+  }
+
+  .swiper-container .img-box {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0.9rem;
+    padding-bottom: 3.1rem;
+    height: 13.225rem;
+  }
+
+  .swiper-container .img-box img {
+    max-width: 100%;
+    max-height: 9.225rem;
+  }
+
+  .swiper-container .no-img-box {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    padding-top: 3.1rem;
+    margin: 1rem;
+    background-color: #efeff4;
+  }
+
+  .swiper-container .no-img-box img {
+    width: 4.35rem;
+    min-height: auto;
+  }
+
+  .swiper-container .no-img-text {
+    margin-top: 0.2rem;
+    font-size: 0.9rem;
+    color: #CCC;
+  }
+
+  .btn-set-bar {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-around;
+    justify-content: space-around;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    height: 2.95rem;
+  }
+
+  .btn-set {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    height: 1.8rem;
+    line-height: 1.8rem;
+    min-width: 3.175rem;
+    text-align: center;
+    color: #FFF;
+    font-size: 0.6rem;
+    border-radius: 0.15rem;
+    background-color: #25AE5F;
+  }
+
+  .btn-disabled {
+    background-color: #DDD;
+  }
+</style>

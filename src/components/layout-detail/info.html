@@ -1,0 +1,183 @@
+<div class="info-bg">
+  <div class="info-modal">
+    <div class="shoot-box">
+      <span class="shoot-box-title">户型图绘制单号：{{!data.drawNo}}</span>
+      <div>
+        摄 影 师：{{!data.cameramanName}}
+        <a class="tel-wrap" href="tel:{{!data.cameramanCell}}">
+          <span class="tel-underline">{{!data.cameramanCell}}</span>
+          <i class="icon icon-call"></i>
+        </a>
+      </div>
+      提交时间：{{!data.submitTime}}
+    </div>
+    <div class="draw-box">
+      <div>
+        <span class="color-999">绘 制 人 ：</span>
+        {{!data.drawPersonName}}
+        {{?data.drawPersonMobile}}
+        <a class="tel-wrap" href="tel:{{!data.drawPersonMobile}}">
+          <span class="tel-underline">{{!data.drawPersonMobile}}</span>
+          <i class="icon icon-call"></i>
+        </a>
+        {{?}}
+      </div>
+      <span class="color-999">分配时间：</span>{{!data.allocationTime}}
+      <br/>
+      <span class="color-999">开始绘制：</span>{{!data.drawBeginTime}}
+      <br/>
+      <span class="color-999">绘制完成：</span>{{!data.drawEndTime}}
+    </div>
+    <div class="review-box">
+      <div>
+        <span class="color-999">审 核 人 ：</span>
+        {{!data.approvePersonName}}
+        {{?data.approvePersonMobile}}
+        <a class="tel-wrap" href="tel:{{!data.approvePersonMobile}}">
+          <span class="tel-underline">{{!data.approvePersonMobile}}</span>
+          <i class="icon icon-call"></i>
+        </a>
+        {{?}}
+      </div>
+      <span class="color-999">审批时间：</span>{{!data.approveTime}}
+    </div>
+    <i class="icon icon-error" id="close"></i>
+  </div>
+</div>
+<script>
+  var coala = require('coala');
+  var config = require('../../utils/config');
+
+  module.exports = {
+    listen: {
+      mount: function () {
+        var _this = this;
+
+        // 根据绘制单号请求接口
+        $.ajax({
+          type: 'GET',
+          data: {
+            personId: coala.personId,
+            appointmentId: coala.surveyDetailData.id,
+          },
+          url: config.layoutUrl + 'getLayoutDetailByNo',
+          beforeSend: function () {
+            $.showIndicator();
+          },
+          complete: function () {
+            $.hideIndicator();
+          }
+        }).done(function (result) {
+          if (result.code !== 'C0000') {
+            $.toast(result.msg);
+            return;
+          }
+          _this.data = result.data;
+          _this.update();
+        });
+      }
+    },
+    mixins: {
+    },
+    events: {
+      'click #close': 'closeModal'
+    },
+    handle: {
+      closeModal: function () {
+        this.parent.$('#infoBox').addClass('dn');
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .tel-underline {
+    margin-left: 4px;
+    margin-right: 3px;
+    text-decoration: underline;
+  }
+
+  .color-999 {
+    color: #999;
+  }
+
+  .info-bg {
+    position: fixed;
+    top: 0;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, .7);
+  }
+
+  .tel-wrap {
+    color: #333;
+  }
+
+  .info-bg .icon-call {
+    font-size: 0.65rem;
+    color: #25AE5F;
+  }
+
+  .info-modal {
+    position: absolute;
+    top: 15%;
+    padding-bottom: 1.75rem;
+    width: 85%;
+    line-height: 1.5rem;
+    font-size: 0.7rem;
+    background-color: #FFF;
+    border-radius: 0.5rem;
+  }
+
+  .info-modal .icon-error {
+    position: absolute;
+    left: 50%;
+    bottom: -3.5rem;
+    margin-left: -0.75rem;
+    font-size: 1.5rem;
+    color: #FFF;
+  }
+
+  .shoot-box {
+    padding: 1.1rem 1rem 0.75rem;
+    line-height: 1.25rem;
+    background-color: #25AE5F;
+    color: #BEFFDA;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+  }
+
+  .shoot-box-title {
+    color: #FFF;
+    font-size: 0.8rem;
+  }
+
+  .shoot-box .tel-wrap {
+    color: #BEFFDA;
+  }
+
+  .shoot-box .icon-call {
+    margin-top: -2px;
+    color: #FFF;
+  }
+
+  .draw-box, .review-box {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .draw-box {
+    border-bottom: 1px solid #DDD;
+    padding-top: 1.2rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .review-box {
+    padding-top: 0.6rem;
+  }
+</style>

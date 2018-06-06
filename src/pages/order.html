@@ -1,0 +1,328 @@
+<div class="page page-current">
+  <header class="bar bar-nav">
+    <div class="buttons-tab">
+      <a href="#tab1" class="tab-link{{?data.tabIndex == 1}} active{{?}} button">待拍摄</a>
+      <a href="#tab2" class="tab-link{{?data.tabIndex == 2}} active{{?}} button">已拍摄</a>
+      <a href="#tab3" class="tab-link{{?data.tabIndex == 3}} active{{?}} button">已取消</a>
+    </div>
+  </header>
+  <nav id="nav" class="bar bar-tab"></nav>
+  <div class="status">
+    <div class="buttons-row">
+      <a href="javascript:;" class="active button" data-status="WAITING_UPLOAD">待上传</a>
+      <a href="javascript:;" class="button" data-status="WAITING_AUDIT">待审核</a>
+      <a href="javascript:;" class="button" data-status="AUDIT_NOT_PASS">不通过</a>
+      <a href="javascript:;" class="button" data-status="FINISHED">已完成</a>
+    </div>
+  </div>
+  <div class="content infinite-scroll infinite-scroll-bottom" data-distance="50">
+    <div class="tabs">
+      <div id="tab1" class="tab{{?data.tabIndex == 1}} active{{?}}"></div>
+      <div id="tab2" class="tab{{?data.tabIndex == 2}} active{{?}}"></div>
+      <div id="tab3" class="tab{{?data.tabIndex == 3}} active{{?}}"></div>
+    </div>
+    <div class="infinite-scroll-preloader scroll-loading">
+      <div class="preloader"></div>
+    </div>
+    <div class="infinite-scroll-preloader nomore-data">
+      没有更多数据了
+    </div>
+    <div class="infinite-scroll-preloader no-data">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无订单</div>
+    </div>
+  </div>
+  <div id="popup"></div>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: {},
+    refs: {
+      nav: {
+        el: '#nav',
+        component: require('../components/nav.html')
+      },
+      confirmPopup: {
+        component: require('../components/confirm.html'),
+        el: '#popup',
+        data: {
+          title: '是否确认已完成拍摄任务？',
+          zindex: 9,
+          height: 7
+        }
+      }
+    },
+
+    listen: {
+      mount: function () {
+        var _this = this
+        coala.setTitle('历史实勘')
+        this.$('.infinite-scroll-bottom').on('infinite', function() {
+          _this.refs['tab' + _this.data.tabIndex].trigger('loadmore')
+        })
+
+        switch(this.data.tabIndex) {
+          case '1':
+            this.refs.tab1 = coala.mount(require('../components/unshoot-list.html'), this.es + ' #tab1')
+            this.refs.tab1.parent = this
+            break
+          case '2':
+            this.refs.tab2 = coala.mount(require('../components/shooted-list.html'), this.es + ' #tab2')
+            this.refs.tab2.parent = this
+            break
+          case '3':
+            this.refs.tab3 = coala.mount(require('../components/canceled-list.html'), this.es + ' #tab3')
+            this.refs.tab3.parent = this
+            break
+        }
+      }
+    },
+
+    events: {
+      'click .tab-link': 'hashTab',
+      'click .status .button': 'switchStatus'
+    },
+
+    handle: {
+      hashTab: function(e) {
+        var tab = $(e.target).attr('href').replace('#', '')
+        coala.cr.go('/order/' + tab)
+      },
+
+      switchStatus: function(e) {
+        this.$('.status .button.active').removeClass('active')
+        $(e.target).addClass('active')
+        this.refs.tab2.trigger('switchStatus', $(e.target).data('status'))
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .bar {
+    padding: 0;
+  }
+
+  .bar .button {
+    line-height: 2.2rem;
+    height: 2.2rem;
+    top: 0;
+  }
+
+  .content {
+    /* margin-bottom: 2.5rem; */
+  }
+
+  .status {
+    padding: 0.8rem 0.5rem;
+    background: #efeff4;
+    position: fixed;
+    top: 2.2rem;
+    left: 0;
+    width: 100%;
+    z-index: 16;
+    display: none;
+  }
+
+  .status .button.active{
+    background-color: #25ae5f;
+    color: #ffffff;
+  }
+
+  .status .button {
+    border-color: #25ae5f;
+    color: #25ae5f;
+    line-height: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.7rem;
+    font-weight: 400;
+}
+
+  .list-block {
+    margin: 0
+  }
+
+  .item-inner {
+    align-self: flex-start;
+  }
+
+  .list-block .item-content {
+    padding-left: 0.5rem;
+  }
+
+  #tab1 .list-block .item-content:after, #tab2 .list-block .item-content:after{
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0;
+    right: auto;
+    top: auto;
+    height: 1px;
+    width: calc(100% - 0.5rem);
+    background-color: #e7e7e7;
+    display: block;
+    z-index: 8;
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+
+  .list-block.media-list .item-inner {
+    padding-top: 0;
+    padding-bottom: 0.7rem;
+  }
+
+  .list-block .item-inner:after {
+    background-color: #ffffff;
+    z-index: 8;
+  }
+
+  .item-title {
+    color: #2e2e2e;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 400;
+    padding-left: 0.5rem;
+    padding-top: 0.8rem;
+  }
+
+  .item-subtitle {
+    color: #a6a6a6;
+    font-size: 0.6rem;
+    font-weight: 400;
+    line-height: 0.85rem;
+    padding-top: 0.3rem;
+  }
+
+  .item-right {
+    margin-right: 0.5rem;
+    align-self: flex-start;
+    padding-bottom: 0.45rem;
+  }
+
+  .item-ops {
+    text-align: right;
+    width: 8rem;
+    padding-top: 0.5rem;
+  }
+
+  .item-date {
+    color: #ff9911;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-block;
+    line-height: 0.7rem;
+    vertical-align: middle;
+    padding-right: 0.5rem;
+  }
+
+  .item-date > span {
+    font-size: 0.55rem;
+    color: #2e2e2e;
+    font-weight: 400;
+  }
+
+  .item-date > span > span {
+    color: #a6a6a6;
+    font-weight: 400;
+  }
+
+  .item-finishdate {
+    font-size: 0.7rem;
+    color: #2e2e2e;
+    line-height: 0.8rem;
+  }
+
+  .item-finishdate span {
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: #a6a6a6;
+  }
+
+  .item-finish {
+    color: #25ae5f;
+    font-size: 0.7rem;
+    font-weight: 400;
+    padding: 0.2rem 0.75rem;
+    border-radius: 0.65rem;
+    border: 1px solid #25ae5f;
+  }
+
+  .item-canceldate {
+    color: #a6a6a6;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 0.8rem;
+  }
+
+  .item-canceldate span {
+    font-size: 0.55rem;
+    font-weight: 400;
+  }
+
+  .list-cancel-block {
+    background: #ffffff;
+    margin-top: 0.5rem;
+  }
+
+  .list-cancel-block .item-content {
+    border-bottom: 1px solid #e7e7e7;
+  }
+
+  .list-cancel-block .item-desc {
+    color: #2e2e2e;
+    font-size: 0.6rem;
+    font-weight: 400;
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  }
+
+  #tab2 {
+    overflow: hidden;
+  }
+
+  #tab2 .list-block {
+    margin-top: 3.4rem;
+    overflow: auto;
+  }
+
+  #tab3 .list-block .item-content {
+    padding-left: 0;
+    margin-left: 0.5rem;
+  }
+
+  .nomore-data, .no-data {
+    display: none;
+    color: #a6a6a6;
+    font-size: 0.75rem;
+  }
+
+  .no-data {
+    margin-top: 4rem;
+  }
+
+  .no-data img {
+    height: 8rem;
+  }
+
+  .list-block ul:after {
+    z-index: 8;
+  }
+
+  .item-title .ellipsis {
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+
+  .item-title .garden {
+    max-width: 4.7rem;
+  }
+
+  .item-title .build {
+    max-width: 3.75rem;
+  }
+</style>

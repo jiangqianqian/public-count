@@ -1,0 +1,56 @@
+<table width="100%" class="tabs-table">
+  <tbody>
+    {{~data.list :item:index}}
+    {{?data.isMark}}
+    <tr id="item{{= (data.markCurrentPage - 1) * (data.pageSize - 1) + index + 1}}" data-buildingname="{{!item.buildingName}}" data-buildingid="{{!item.buildingId}}" data-lng="{{!item.lng}}" data-lat="{{!item.lat}}">
+      <td class="order-label">{{= (data.markCurrentPage - 1) * (data.pageSize - 1) + index + 1}}</td>
+    {{??}}
+    <tr data-buildingname="{{!item.buildingName}}" data-buildingid="{{!item.buildingId}}">
+    {{?}}
+      <td class="title-label">{{=item.buildingName || ''}}</td>
+      <td class="btn-label-wrap">
+        <a class="btn-label" href="javascript:;">标注</a>
+      </td>
+    </tr>
+    {{~}}
+  </tbody>
+</table>
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+
+  //多个标签页下的无限滚动
+  var loading = false;
+
+  module.exports = {
+    mixins: {
+      render: function (isMark) {
+        if (isMark) {
+          this.data.isMark = isMark;
+          this.data.markCurrentPage = this.parent.markCurrentPage;
+          this.data.list = this.parent.markList;
+          !this.data.pageSize && (this.data.pageSize = this.parent.pageSize);
+        } else {
+          this.data.list = this.parent.noMarkList;
+        }
+        this.update();
+      }
+    },
+    events: {
+      'click .btn-label': 'goMakeLabel',
+    },
+    handle: {
+      goMakeLabel: function (e) {
+        e.stopPropagation();
+        var data = $(e.currentTarget).parent().parent().data();
+        coala.makeLabelData = {
+          lng: data.lng,
+          lat: data.lat,
+          buildingName: data.buildingname,
+          buildingId: data.buildingid
+        }
+        coala.cr.go('/make-label');
+      },
+    }
+  }
+</script>

@@ -1,0 +1,338 @@
+<div id="map"></div>
+<a class="control-bar control-center" id="controlCenter" href="javascript:;">
+  <i class="icon icon-dangqianweizhi"></i>
+</a>
+<a class="control-bar control-scale" id="controlScale" href="javascript:;">
+  <i class="icon icon-zuidahua"></i>
+</a>
+
+<script>
+  var coala = require('coala');
+  var BMapLib = require('../assets/vendor/RichMarker');
+  var config = require('../utils/config');
+
+  // 定位是彩色的，需要用到svg图标
+  require('../assets/font/iconfont');
+
+  // 存入在地图上展示的楼栋标注点
+  var markerArray = [];
+
+  // 小区中心点
+  var centerPoint;
+
+  module.exports = {
+    data: {},
+    listen: {
+      mount: function () {
+        var _this = this;
+        this.renderMap();
+
+        // 地图上 marker 的点击操作
+        $(document).on('touchend.mapMarker', '.label-marker-text,.order-number', function (e) {
+          var $parent = $(e.currentTarget).parent().parent();
+          var $markWrapper = $parent.parent();
+          if (_this.curBuildId.length) {
+            _this.prevBuildId = _this.curBuildId;
+            var $prevBuild = _this.$('#' + _this.curBuildId);
+            var $prevMarkWrapper = $prevBuild.parent();
+            $prevBuild.removeClass('cur');
+            $prevMarkWrapper.css('z-index', $prevMarkWrapper.data('mapzindex'));
+          }
+          $parent.addClass('cur');
+          _this.curBuildId = $parent[0].id;
+          $markWrapper.data('mapzindex', $markWrapper.css('z-index'));
+          $markWrapper.css('z-index', 4);
+
+          // 关联列表对应行
+          _this.findListItem();
+        });
+      },
+
+      unmount: function() {
+        $(document).off('touchend.mapMarker');
+      },
+
+      maxMap: function () {
+        // 地图放大，此方法由路由触发
+        var $mapContainer = this.parent.$('.map-container');
+        $mapContainer.addClass('expand');
+        // mapContainer 高度由 50% 变为 100% ，中心点移动的距离为高度除以4
+        this.bMap.panBy(0, $mapContainer.height() / 4);
+        this.$('#controlScale .icon').removeClass('icon-zuidahua').addClass('icon-zuixiaohua');
+      },
+
+      minMap: function () {
+        // 地图缩小，此方法由路由触发
+        var $mapContainer = this.parent.$('.map-container');
+        $mapContainer.removeClass('expand');
+        this.bMap.panBy(0, -$mapContainer.height() / 2);
+        this.$('#controlScale .icon').removeClass('icon-zuixiaohua').addClass('icon-zuidahua');
+      }
+    },
+    mixins: {
+      curBuildId: '', // 当前选中的座落id
+      prevBuildId: '', // 前一次选中的座落id
+      renderMap: function () {
+        var _this = this;
+        this.bMap = config.initMap({
+          el: 'map',
+          lng: coala.gardenCoordinate.lng,
+          lat: coala.gardenCoordinate.lat,
+          level: 17
+        });
+
+        // var marker1 = new BMap.Marker({
+        //   lng: 114.025873,
+        //   lat: 22.546553
+        // });
+        // this.bMap.addOverlay(marker1);
+
+        // 以小区为地图中心点
+        var centerHtml =
+          '<svg class="icon icon-ditu-wrap" id="communityCenter" aria-hidden="true"><use xlink:href="#icon-ditu"></use></svg>';
+        centerPoint = new BMap.Point(coala.gardenCoordinate.lng, coala.gardenCoordinate.lat);
+        var centerMarker = new BMapLib.RichMarker(centerHtml, centerPoint, {
+          "anchor": new BMap.Size(-20, -35)
+        });
+        this.bMap.addOverlay(centerMarker);
+        this.$('#communityCenter').parent().css('z-index', 3);
+
+        // 当前用户所在位置
+        var geolocation = new BMap.Geolocation();
+        geolocation.getCurrentPosition(function (r) {
+          _this.currentPosition = r.point;
+
+          // 画当前位置
+          if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+            var html = '<div class="circle-pos-bg" id="curPoint"><i class="circle-pos"></i></div>';
+            var mk = new BMapLib.RichMarker(html, r.point, {
+              "anchor": new BMap.Size(-9, -9)
+            });
+            _this.bMap.addOverlay(mk);
+            _this.$('#curPoint').parent().css('z-index', 4);
+          } else {
+            $.toast("获取定位失败!");
+          }
+        }, {
+          enableHighAccuracy: true
+        });
+      },
+      renderMarker: function (markerList) {
+        // 回到中心点
+        this.bMap.setCenter(centerPoint);
+
+        // 重置
+        this.curBuildId = '';
+        this.prevBuildId = '';
+
+        this.markCurrentPage = this.parent.refs.list.markCurrentPage;
+        this.pageSize = this.parent.refs.list.pageSize;
+        this.removeMarker();
+
+        for (var i = 0, len = markerList.length; i < len; i++) {
+          var labelMarker = this.getMarker(markerList[i], i);
+          this.bMap.addOverlay(labelMarker);
+          markerArray.push(labelMarker);
+        }
+
+        // 设置最佳视图级别
+        var zoom = this.bMap.getViewport(markerArray).zoom;
+        zoom < 17 && this.bMap.setZoom(zoom);
+      },
+      getMarker: function (marker, index) {
+        var calIndex = ((this.markCurrentPage - 1) * (this.pageSize - 1) + index + 1);
+        var labelHtml = '<div class="label-marker-wrap" data-lat="' + marker.lat +
+          '" data-lng="' + marker.lng +
+          '" id="build' + calIndex + '">' +
+          '<div class="label-marker"><div class="label-marker-arrow"></div>' +
+          '<div class="order-number">' +
+          calIndex +
+          '</div>' +
+          '<div class="label-marker-text">' +
+          marker.buildingName +
+          '</div></div></div>';
+
+        return new BMapLib.RichMarker(labelHtml, new BMap.Point(marker.lng, marker.lat), {
+          "anchor": new BMap.Size(-15, -37)
+        });
+      },
+      removeMarker: function () {
+        for (var i = 0, len = markerArray.length; i < len; i++) {
+          this.bMap.removeOverlay(markerArray[i]);
+        }
+        markerArray.length = 0;
+      },
+      findListItem: function () {
+        // 自动打开已标注页签，且定位到列表中对应楼栋位置，并【将该楼栋选中】
+        // document.getElementById('markScrollTab').click();
+        this.parent.$('#markScrollTab').addClass('active').prev().removeClass('active');
+        this.parent.$('#markScroll').addClass('active').prev().removeClass('active');
+
+        // curBuildId 为 'buildxxxx';
+        var list = this.parent.refs.list;
+        var $curItem = list.$('#item' + this.curBuildId.substring(5));
+        this.prevBuildId.length && list.$('#item' + this.prevBuildId.substring(5)).removeClass('cur');
+        $curItem.addClass('cur');
+
+        list.$('#markBody').scrollTop($curItem.position().top);
+      }
+    },
+    events: {
+      'click #controlCenter': 'backCenter',
+      'click #controlScale': 'scale'
+    },
+    handle: {
+      backCenter: function () {
+        this.currentPosition && this.bMap.panTo(this.currentPosition);
+      },
+      scale: function (e) {
+        var $mapContainer = this.parent.$('.map-container');
+        if ($mapContainer.hasClass('expand')) {
+          coala.cr.back();
+        } else {
+          coala.cr.go('/map/max');
+        }
+      }
+    }
+  }
+</script>
+<style scoped>
+  #map {
+    height: 100%;
+  }
+
+  .icon-ditu {
+    position: absolute;
+    font-size: 30px;
+    color: #ff0a0a;
+  }
+
+  .label-marker-wrap {
+    position: absolute;
+    width: 30px;
+    height: 29px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  .label-marker {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  .label-marker-text {
+    display: inline-block;
+    height: 29px;
+    line-height: 29px;
+    max-width: 6.6rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+    border-radius: 4px;
+    background-color: #25ae5f;
+    box-shadow: 1px 1px 4px rgba(19, 19, 9, .29);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    color: #fff;
+    font-size: 0.7rem;
+  }
+
+  .label-marker-arrow {
+    position: absolute;
+    display: block;
+    bottom: -8px;
+    width: 0;
+    height: 0;
+    border-right: 4px solid transparent;
+    border-top: 8px solid #25ae5f;
+    border-left: 4px solid transparent;
+    filter: drop-shadow(1px 1px 6px rgba(19, 19, 9, .29));
+  }
+
+  .order-number {
+    position: absolute;
+    bottom: -26px;
+    min-width: 16px;
+    height: 16px;
+    padding-left: 4px;
+    padding-right: 4px;
+    line-height: 16px;
+    background-color: #25ae5f;
+    border-radius: 8px;
+    text-align: center;
+    color: #fff;
+    font-size: 0.7rem;
+  }
+
+  .label-marker-wrap.cur .label-marker-text,
+  .label-marker-wrap.cur .order-number {
+    background-color: #f91;
+  }
+
+  .label-marker-wrap.cur .label-marker-arrow {
+    border-top: 8px solid #f91;
+  }
+
+  .control-bar {
+    position: absolute;
+    bottom: 0.325rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 1px 1px 3px rgba(19, 19, 9, .16);
+  }
+
+  .control-bar .icon {
+    color: #818181;
+    font-size: 0.9rem;
+  }
+
+  .control-center {
+    left: 0.6rem;
+  }
+
+  .control-center .icon {
+    font-size: 1.3rem;
+  }
+
+  .control-scale {
+    right: 0.6rem;
+  }
+
+  .circle-pos-bg {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    padding: 5px;
+    background-color: rgba(255, 10, 10, .19);
+    border-radius: 50%;
+  }
+
+  .circle-pos {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    vertical-align: top;
+    background-color: #ff0a0a;
+    border-radius: 50%;
+  }
+
+  .icon-ditu-wrap {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+  }
+</style>

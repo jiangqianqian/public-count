@@ -1,0 +1,154 @@
+@import url(../font/iconfont.css);
+@import url(../vendor/sm.css);
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.loading {
+  height: 100%;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.order-modal {
+  position: absolute;
+  left: 0.25rem;
+  right: 0.25rem;
+  width: initial;
+  z-index: 11000;
+  margin-left: initial;
+}
+
+.order-modal .modal-inner {
+  padding: 0.75rem 0 0 0;
+}
+
+.icon {
+  font-family: icon !important;
+}
+
+.buttons-tab .button.active,
+.bar-tab .tab-item.active,
+.bar-tab .tab-item:active {
+  color: #ff9911;
+  border-color: #ff9911;
+}
+
+.popup-overlay.modal-overlay-visible {
+  display: none;
+}
+
+.popup.modal-in,
+.popup.modal-out {
+  -webkit-transition-duration: .2s;
+  transition-duration: .2s;
+}
+
+.modal.toast {
+  margin-right: 1.2rem;
+  height: initial;
+  line-height: 1rem;
+  font-size: 0.7rem;
+  padding: 0.4rem;
+}
+
+/* 初始化 modal 样式 */
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2) {
+  .modal-button:after {
+    -webkit-transform: scaleY(1);
+    transform: scaleY(1);
+  }
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 3) {
+  .modal-button:after {
+    -webkit-transform: scaleY(1);
+    transform: scaleY(1);
+  }
+}
+
+.modal-inner {
+  padding: 1.2rem 0.75rem;
+}
+
+  @-webkit-keyframes rotate {
+    0% {
+      -webkit-transform: rotate(0deg) scale(1);
+    }
+    50% {
+      -webkit-transform: rotate(180deg) scale(0.6);
+    }
+    100% {
+      -webkit-transform: rotate(360deg) scale(1);
+    }
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(0.6);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
+    }
+  }
+
+  /* 处理图片预加载和暂无图片 */
+
+  .loading-img {
+    background-color: #A0A0A0;
+    border-radius: 100%;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+    border: 2px solid #A0A0A0;
+    border-bottom-color: transparent;
+    height: 1.2rem;
+    width: 1.2rem;
+    background: transparent !important;
+    display: inline-block;
+    -webkit-animation: rotate 0.75s 0s linear infinite;
+    animation: rotate 0.75s 0s linear infinite;
+  }
+
+  .no-img-wrap {
+    width: 100%;
+    height: 100%;
+    display: -webkit-flex;
+    -webkit-justify-content: center;
+    -webkit-align-items: center;
+    -webkit-flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 4rem;
+    height: 4rem;
+    background-color: #efeff4;
+  }
+
+  .no-img-wrap img {
+    width: 3rem;
+    min-height: auto!important;
+  }
+
+  .no-img-wrap .text {
+    margin-top: 0.2rem;
+    font-size: 0.7rem;
+    color: #ccc;
+  }
+
+  /* 处理图片预加载和暂无图片结束 */
+
+
+

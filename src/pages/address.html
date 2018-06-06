@@ -1,0 +1,94 @@
+<div class="page page-current">
+  <div class="address-title">
+    <input id="address" value="{{!data.address}}" readonly>
+    <a id="navigator" class="navigator-btn" href="javascript:;"><i class="icon icon-clippy"></i>复制地址</a>
+  </div>
+  <div class="content" id="addressMap"></div>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: function() {
+      if (!coala._address) return coala.cr.back()
+      return coala._address
+    },
+    listen: {
+      mount: function () {
+        this.bMap = config.initMap({el: 'addressMap', lng: this.data.lng, lat: this.data.lat, level: 16})
+
+        var marker = new BMap.Marker({lng: this.data.lng, lat: this.data.lat})
+	      this.bMap.addOverlay(marker)
+	      marker.disableDragging()
+      }
+    },
+    events: {
+      'click #navigator': 'copyAddress'
+    },
+    
+    handle: {
+      copyAddress: function() {
+        var $address = this.$('#address')
+        var len = $address.val().length
+        if($address[0].setSelectionRange){
+          $address[0].setSelectionRange(0, len)
+        } else if($address[0].createTextRange) {
+          var range=$address[0].createTextRange()
+          range.collapse(true)
+          range.moveStart('character', 0);
+          range.moveEnd('character', 0, len);
+          range.select()
+        }
+        $address[0].focus()
+        document.execCommand('copy')
+        this.$('#address').blur()
+        $.toast('地址复制成功')
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .address-title {
+    color: #2e2e2e;
+    font-size: 0.6rem;
+    background-color: #ffffff;
+    height: 1.75rem;
+    line-height: 1.75rem;
+    padding-left: 0.5rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 100%;
+    clear: both;
+  }
+
+  .navigator-btn {
+    float: right;
+    margin-top: 0.35rem;
+    margin-right: 0.5rem;
+    border-radius: 10px;
+    border: 1px solid #25ae5f;
+    color: #25ae5f;
+    font-size: 0.6rem;
+    line-height: 0.6rem;
+    padding: 0.15rem 0.3rem;
+  }
+
+  .navigator-btn .icon-clippy {
+    margin-right: 0.2rem;
+    font-size: 0.6rem;
+  }
+
+  #address {
+    border: none;
+    width: 13rem;
+  }
+
+  #addressMap {
+    height: 100%;
+  }
+</style>

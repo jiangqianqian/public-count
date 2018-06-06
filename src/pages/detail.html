@@ -1,0 +1,907 @@
+<div class="page page-current">
+  <div class="content">
+    {{?data.status === 'CAMERAMAN_CANCEL'}}
+    <div class="list-block order-status canceled">
+       <div class="item-content">
+          <div class="item-media"><i class="icon icon-error icon-border"></i></div>
+          <div class="status-text">
+            该订单已取消<br>
+            <label>取消原因：</label><span>{{!data.reason}}（{{!data.statusDesc}}）</span>
+          </div>
+       </div>
+    </div>
+    {{??data.status === 'WAITING_SHOOT'}}
+    <div class="list-block order-status unshoot">
+      <div class="item-content item-link">
+        <div class="item-inner">
+          <div class="status-text"><span class="label">拍摄时间：</span><span class="date-label">{{!data.beginShootTimeDetail.dayLabel}}</span><span class="date">({{!data.beginShootTimeDetail.month}}月{{!data.beginShootTimeDetail.day}}日)</span> <span class="time">{{!data.beginShootTimeDetail.hour + ':' + (data.beginShootTimeDetail.minute || '00')}}~{{!data.endShootTimeDetail.hour + ':' + (data.endShootTimeDetail.minute || '00')}}</span></div>
+        </div>
+      </div>
+    </div>
+    {{??data.status === 'WAITING_ORDER'}}
+    {{?data.isConflictTime}}
+    <div class="list-block order-status">
+       <div class="item-content">
+          <div class="item-media"><i class="icon icon-warn"></i></div>
+          <div class="status-text">该预约时间与您的订单 <span>{{=data.conflictBills}}</span> 所设置的冻结时间冲突！</div>
+       </div>
+    </div>
+    {{?}}
+    {{??}}
+    <div class="list-block order-status uploaded">
+       <div class="item-content">
+          <div class="item-media"><i class="icon icon-border{{?data.status === 'WAITING_UPLOAD'}} icon-notice{{??data.status === 'WAITING_AUDIT' || data.status === 'FINISHED'}} icon-hook{{??data.status === 'AUDIT_NOT_PASS'}} icon-error{{?}}" style="{{?data.status === 'WAITING_UPLOAD' || data.status === 'WAITING_AUDIT'}}color: #ff9911; border-color: #ff9911;{{??data.status === 'AUDIT_NOT_PASS'}}color: #ff0000; border-color: #ff0000;{{??data.status === 'FINISHED'}}color: #25ae5f; border-color: #25ae5f;{{?}}"></i></div>
+          <div class="status-text" style="{{?data.status === 'WAITING_UPLOAD' || data.status === 'WAITING_AUDIT'}}color: #ff9911;{{??data.status === 'AUDIT_NOT_PASS'}}color: #ff0000;{{??data.status === 'FINISHED'}}color: #25ae5f;{{?}}">{{!data.statusDesc}}</div>
+       </div>
+       <div class="flow-content">
+          <div class="flows">
+            <div class="flow-item active{{?data.status === 'WAITING_SHOOT'}} current{{?}}"><i class="point"></i><label>预约拍摄</label><br><span>预拍时间：{{!data.beginShootTimeDetail.year}}年{{!data.beginShootTimeDetail.month}}月{{!data.beginShootTimeDetail.day}}日  {{!data.beginShootTimeDetail.hour || '00'}}:{{!data.beginShootTimeDetail.minute || '00'}}~{{!data.endShootTimeDetail.hour || '00'}}:{{!data.endShootTimeDetail.minute || '00'}}</span></div>
+            <div class="flow-item active{{?data.status === 'WAITING_UPLOAD'}} current{{?}}"><i class="point"></i><label>完成拍摄</label><br><span>拍摄时间：{{!data.finishedShootTimeDetail.year}}年{{!data.finishedShootTimeDetail.month}}月{{!data.finishedShootTimeDetail.day}}日  {{!data.finishedShootTimeDetail.hour || '00'}}:{{!((data.finishedShootTimeDetail.minute + '').length < 2 ? '0' + data.finishedShootTimeDetail.minute : (data.finishedShootTimeDetail.minute || '00'))}}</span></div>
+            <div class="flow-item{{?data.uploadTime}} active{{?}}{{?data.status === 'WAITING_AUDIT'}} current{{?}}"><i class="point"></i><label>上传图片</label><br>{{?data.uploadTime}}<span>上传时间：{{!data.uploadTimeDetail.year}}年{{!data.uploadTimeDetail.month}}月{{!data.uploadTimeDetail.day}}日  {{!data.uploadTimeDetail.hour || '00'}}:{{!((data.uploadTimeDetail.minute + '').length < 2 ? '0' + data.uploadTimeDetail.minute : (data.uploadTimeDetail.minute || '00'))}}</span>{{?}}</div>
+            <div class="flow-item{{?data.auditTime}} active{{?}}{{?data.status === 'AUDIT_NOT_PASS'}} current{{?}}"><i class="point"></i><label>审核图片</label><br>{{?data.auditTime}}<span>审核时间：{{!data.auditTimeDetail.year}}年{{!data.auditTimeDetail.month}}月{{!data.auditTimeDetail.day}}日  {{!data.auditTimeDetail.hour || '00'}}:{{!((data.auditTimeDetail.minute + '').length < 2 ? '0' + data.auditTimeDetail.minute : (data.auditTimeDetail.minute || '00'))}}</span>{{?}}</div>
+            <div class="flow-item{{?data.status === 'FINISHED'}} active current{{?}}"><i class="point"></i><label>审核通过</label></div>
+        </div>
+       </div>
+    </div>
+    {{?}}
+
+    <div class="content-block order-info">
+      <div class="info-field"><label>预约时间：</label>{{!data.appointmentTimeDetail.dayLabel}} <label>({{!data.appointmentTimeDetail.month}}月{{!data.appointmentTimeDetail.day}}日)</label> <strong>{{!data.appointmentTimeDetail.hour + ':' + ((data.appointmentTimeDetail.minute + '').length < 2 ? '0' + data.appointmentTimeDetail.minute : (data.appointmentTimeDetail.minute || '00'))}}</strong></div>
+      <div class="info-field"><label>订单编号：</label>{{!data.appointmentNo}}</div>
+      <div class="info-field flex"><label>预约房源：</label>{{!data.gardenName + ','}} {{!data.buildName ? data.buildName + ',' : ''}} {{!data.unitName ? data.unitName + ',' : ''}} {{!data.roomNumber}}</div>
+      <div class="info-field"><label>户型面积：</label>{{=data.bedRoom || '0'}}房{{=data.livingRoom || '0'}}厅{{=data.kitChen || '0'}}厨{{=data.bathRoom || '0'}}卫 {{!data.direction}} {{=data.buildArea || '0'}}m²</div>
+      <div class="info-field flex"><label>预约备注：</label>{{!data.descToCameraman}}</div>
+    </div>
+
+    {{?data.showLayout}}
+    <!-- 户型图 -->
+      {{?!data.layoutUrl || data.layoutUrl === ''}}
+      <div class="list-block order-status layout">
+        <div class="item-content item-link js-layout-set">
+          <div class="item-inner">
+            <div class="status-text">户型图</div>
+          </div>
+        </div>
+        <div class="no-img">
+          <i class="icon icon-huizhi js-layout-set"></i>
+          <a href="javascript:;" class="btn-set js-layout-set">设置户型图</a>
+        </div>
+      </div>
+      {{??}}
+      <div class="list-block order-status layout">
+        <div class="item-content item-link js-layout-detail">
+          <div class="item-inner">
+            <div class="status-text">户型图</div>
+          </div>
+        </div>
+        <div class="img-box js-layout-detail">
+          {{?data.uploadWayCn === '已挂接'}}
+          <div class="process-state finish">
+            <span class="high-text">{{!data.uploadWayCn}}</span>
+          </div>
+          {{??}}
+          <div class="process-state {{?data.approveStatusEn === 'APPROVED_OK'}}finish{{?}}">
+            {{!data.uploadWayCn}}：
+            <span class="high-text">{{!data.approveStatusCn}}</span>
+          </div>
+          {{?}}
+          <img src="{{=data.layoutUrl}}">
+        </div>
+      </div>
+      {{?}}
+    <!-- 户型图 结束 -->
+    {{?}}
+
+    <div class="list-block media-list agent-info">
+      <ul>
+        <li class="item-content">
+          <div class="item-inner agent-title">预约经纪人</div>
+        </li>
+        <li class="item-content">
+          <div class="item-media">
+            {{?data.headUrl}}
+            <img src="{{!data.headUrl}}">
+            {{??}}
+            <img src="assets/img/noavatar.gif">
+            {{?}}
+          </div>
+          <div class="item-inner agent-text">
+            <div class="agent-name">{{!data.appointmentName}} <span>{{!data.appointmentPhone}}</span></div>
+            <div class="agent-store">{{!data.branchName}}</div>
+          </div>
+          <div class="item-right">
+            <a class="icon icon-call" href="tel:{{=data.appointmentPhone}}"></a>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="list-block map-info">
+      <ul>
+        <li class="item-content item-link" id="openMap">
+          <div class="item-inner">
+            <div class="map-text"><label>地址：</label>{{!data.gardenAddress}}</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="detail-map-wrap">
+      {{?data.status !== 'WAITING_ORDER'}}
+        <div class="label-tip">
+          {{?data.noMarkCoordinates > 0}}
+          <div class="text">共 {{=data.sumBuildings || 0}} 个楼栋，还有 <span class="color-f91">{{=data.noMarkCoordinates}}</span>个 楼栋未标注坐标</div>
+          <a class="btn" id="btnLabel" href="javascript:;"><i class="icon iconfont icon-navigator"></i>去标注</a>
+          {{??}}
+            <div class="text">共 {{=data.sumBuildings || 0}} 个楼栋，坐标均已标注{{?data.markSure}}，但疑似有误{{?}}</div>
+            <a class="btn" id="btnLabel" href="javascript:;"><i class="icon iconfont icon-navigator"></i>去修正</a>
+          {{?}}
+        </div>
+      {{?}}
+      <div id="detailMap" class="detail-map"></div>
+    </div>
+  </div>
+
+  {{?data.status === 'WAITING_ORDER' || data.status === 'WAITING_SHOOT'}}
+  <div class="bar bar-footer row">
+    <div class="col-50"><a id="accept" class="button button-big button-fill button-accept">{{=data.status === 'WAITING_ORDER' ? '接 单' : '完成拍摄'}}</a></div>
+    <div class="col-50"><a id="reject" class="button button-big button-fill button-reject">{{=data.status === 'WAITING_ORDER' ? '拒 单' : '取消订单'}}</a></div>
+  </div>
+  {{?? data.status === 'WAITING_UPLOAD' || data.status === 'AUDIT_NOT_PASS'}}
+  <div class="bar bar-footer">
+    <a id="reject" class="button button-big button-fill button-reject button-lonely">取消订单</a>
+  </div>
+  {{?}}
+  <div id="popup"></div>
+  <div id="popup2"></div>
+  <div id="confirm"></div>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: function() {
+      return this.fetch()
+    },
+
+    mixins: {
+      fetch: function() {
+        var _this = this
+        return $.ajax({
+          data: {
+            personId: coala.personId,
+            id: _this.opts.id
+          },
+          url: config.apiUrl + 'getDetailForCameraman'
+        })
+      },
+
+      mountPopup: function() {
+        var _this = this
+        if (this.data.status === 'WAITING_ORDER') {
+          this.popup2 = coala.mount(require('../components/reject-reason.html'), this.es + ' #popup2')
+          this.popup2.on('confirm', this.rejectConfirm.bind(this))
+        } else {
+          this.confirm = coala.component(require('../components/confirm.html'))
+          this.confirm.data = {
+            title: '是否确认已完成拍摄任务？',
+            zindex: 16,
+            height: 4.5
+          }
+          this.confirm.mount(this.es + ' #confirm')
+          this.confirm.on('confirm', this.shootConfirm.bind(this))
+
+          this.popup = coala.mount(require('../components/cancel-reason.html'), this.es + ' #popup')
+          this.popup.on('confirm', this.cancelConfirm.bind(this))
+        }
+      },
+
+      rejectConfirm: function() {
+        var _this = this
+        $.showIndicator()
+        $.ajax({
+          type: 'POST',
+          data: {
+            personId: coala.personId,
+            id: _this.opts.id,
+            rejectReason: _this.popup2.getValue()
+          },
+          url: config.apiUrl + 'rejectAppointmentBill'
+        }).done(function(result) {
+          $.hideIndicator()
+          if (result.code === 'C0000') {
+            _this.popup2.hide()
+            coala.cr.back()
+          } else {
+            $.toast(result.msg)
+          }
+        }).fail(function(result) {
+          $.hideIndicator()
+          $.toast('网络异常')
+        })
+      },
+
+      cancelConfirm: function() {
+        var _this = this
+        var value = this.popup.getValue()
+        $.showIndicator()
+        $.ajax({
+          type: 'POST',
+          data: {
+            personId: coala.personId,
+            id: _this.opts.id,
+            cancelReason: value.cancelReason,
+            cancelRemark: value.cancelRemark
+          },
+          url: config.apiUrl + 'cancelBillForCameraman'
+        }).done(function(result) {
+          $.hideIndicator()
+          if (result.code === 'C0000') {
+            _this.popup.hide()
+            coala.cr.back()
+          } else {
+            $.toast(result.msg)
+          }
+        }).fail(function(result) {
+          $.hideIndicator()
+          $.toast('网络异常')
+        })
+      },
+
+      shootConfirm: function() {
+        var _this = this
+        $.showIndicator()
+        $.ajax({
+          type: 'POST',
+          data: {
+            personId: coala.personId,
+            id: _this.opts.id
+          },
+          url: config.apiUrl + 'finishShoot'
+        }).done(function(result) {
+          $.hideIndicator()
+          if (result.code === 'C0000') {
+            coala.cr.back()
+          } else {
+            $.toast(result.msg)
+          }
+        }).fail(function(result) {
+          $.hideIndicator()
+          $.toast('网络异常')
+        })
+      },
+
+      renderMap: function() {
+        this.bMap = config.initMap({el: 'detailMap', lng: this.data.gardenLongitude, lat: this.data.gardenLatitude, level: 13})
+        var marker = new BMap.Marker({lng: this.data.gardenLongitude, lat: this.data.gardenLatitude})
+        this.bMap.addOverlay(marker)
+        marker.disableDragging()
+      },
+
+      goForm: function() {
+        coala.curOrder = {
+          status: this.data.status,
+          id: this.data.id
+        }
+        coala.cr.go('/form')
+      }
+    },
+
+    listen: {
+      mount: function () {
+        coala.setTitle(this.data.gardenName || '实勘详情')
+        this.mountPopup()
+        this.renderMap()
+      },
+
+      update: function() {
+        if (this.data.resource) {
+          if (this.data.resource.code !== 'C0000') {
+            $.toast(this.data.resource.msg)
+            return coala.cr.back()
+          }
+
+          this.data = this.data.resource.data
+        }
+
+        // 处理带 size 的图片尺寸
+        this.data.layoutUrl && (this.data.layoutUrl = config.repaceImgUrl(this.data.layoutUrl, '400x300'));
+
+        switch (this.data.status) {
+          case 'WAITING_UPLOAD':
+            this.data.statusDesc = '已完成拍摄，请及时上传图片'
+            break
+          case 'WAITING_AUDIT':
+            this.data.statusDesc = '已上传图片，等待审核中'
+            break
+          case 'AUDIT_NOT_PASS':
+            this.data.statusDesc = '审核不通过，请重新上传图片'
+            break
+          case 'FINISHED':
+            this.data.statusDesc = '恭喜你，已完成该订单'
+            break
+        }
+
+        // this.data.status = 'WAITING_SHOOT'
+
+        // this.data.statusDesc = '已完成拍摄，请及时上传图片'
+        // this.data.finishedShootTime = '2017'
+
+        // this.data.status = 'WAITING_AUDIT'
+        // this.data.statusDesc = '已上传图片，等待审核中'
+        // this.data.finishedShootTime = '2017'
+        // this.data.uploadTime = '2017'
+
+        // this.data.status = 'AUDIT_NOT_PASS'
+        // this.data.statusDesc = '审核不通过，请重新上传图片'
+        // this.data.finishedShootTime = '2017'
+        // this.data.uploadTime = '2017'
+        // this.data.auditTime = '2017'
+
+        // this.data.status = 'FINISHED'
+        // this.data.statusDesc = '恭喜你，已完成该订单'
+        // this.data.finishedShootTime = '2017'
+        // this.data.uploadTime = '2017'
+        // this.data.auditTime = '2017'
+      }
+    },
+
+    events: {
+      'click #accept': 'accept',
+      'click #reject': 'reject',
+      'click .unshoot .item-link': 'setShootDate',
+      'click #openMap': 'openMap',
+      'click #btnLabel': 'goLabel',
+      'click .js-layout-set': 'layoutSet',
+      'click .js-layout-detail': 'layoutDetail',
+    },
+
+    handle: {
+      accept: function () {
+        var _this = this
+        if (this.data.status === 'WAITING_SHOOT') {
+          this.confirm.show()
+        } else if (this.data.status === 'WAITING_ORDER') {
+          $.showIndicator()
+          $.ajax({
+            data: {
+              personId: coala.personId,
+              id: _this.opts.id
+            },
+            url: config.apiUrl + 'isReceiveBill'
+          }).done(function(result) {
+            $.hideIndicator()
+            if (result.code === 'C0000') {
+              _this.goForm()
+            } else {
+              $.toast(result.msg)
+              setTimeout(coala.cr.back, 1000)
+            }
+          })
+        }
+      },
+
+      reject: function () {
+        if (this.data.status === 'WAITING_ORDER') {
+          this.popup2.show()
+        } else {
+          this.popup.show()
+        }
+      },
+
+      setShootDate: function() {
+        this.goForm()
+      },
+
+      openMap: function () {
+        coala._address = {
+          address: this.data.gardenAddress,
+          lng: this.data.gardenLongitude,
+          lat: this.data.gardenLatitude
+        }
+        coala.cr.go('/address')
+      },
+
+      goLabel: function () {
+        // 存入小区中心点坐标，楼栋标注和生成标注页面用到
+        coala.gardenCoordinate = {
+          lng: this.data.gardenLongitude,
+          lat: this.data.gardenLatitude,
+          id: this.data.gardenId
+        };
+       coala.cr.go('/label');
+      },
+
+      layoutSet: function () {
+        // 设置户型图
+        coala.surveyDetailData = this.data;
+        coala.cr.go('/layout-set');
+      },
+      layoutDetail: function () {
+        // 需求用到 getDetailForCameraman 返回的数据
+        coala.surveyDetailData = this.data;
+        coala.cr.go('/layout-detail');
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .list-block {
+    margin: 0;
+  }
+
+  .content-block {
+    margin: 0;
+    padding: .5rem;
+  }
+
+  .list-block .item-content {
+    padding: 0 .5rem;
+  }
+
+  .order-status .item-content {
+    min-height: initial;
+    -webkit-justify-content: flex-start;
+    justify-content: flex-start;
+    padding: .1rem .5rem;
+  }
+
+  .order-status, .order-info {
+    background: #fff;
+    margin-top: .5rem;
+  }
+
+  .order-status .icon-warn, .order-status .icon-border {
+    font-size: .6rem;
+    height: 1.1rem;
+    line-height: 1.1rem;
+    width: 1.1rem;
+    border-radius: 50%;
+    text-align: center;
+    border: 1px solid #f00;
+    color: #f00;
+    margin-right: .5rem;
+  }
+
+  .order-status .status-text {
+    font-size: .6rem;
+    color: #666;
+    line-height: .8rem;
+  }
+
+  .order-status .status-text span {
+    color: #f91;
+  }
+
+  .order-status.canceled .status-text{
+    color: #f00;
+    font-size: .7rem;
+  }
+
+  .order-status.canceled .status-text label{
+    color: #a6a6a6;
+    font-size: .6rem;
+  }
+
+  .order-status.canceled .status-text span{
+    color: #2e2e2e;
+    font-size: .6rem;
+  }
+
+  .order-status.unshoot .item-inner {
+    background-size: .6rem;
+    background-position: 100% center;
+    min-height: 1.6rem;
+  }
+
+  .order-status.unshoot .item-inner:after {
+    content: initial;
+  }
+
+  .order-status.unshoot .status-text {
+    font-size: .7rem;
+  }
+
+  .order-status.unshoot .label {
+    color: #a6a6a6;
+  }
+
+  .order-status.unshoot .date-label {
+    color: #2e2e2e;
+  }
+
+  .order-status.unshoot .date {
+    color: #a6a6a6;
+  }
+
+  .order-status.unshoot .time {
+    color: #f91;
+    font-weight: 700;
+  }
+
+  .order-info .info-field {
+    font-size: .7rem;
+    line-height: 1.4rem;
+    color: #2e2e2e;
+  }
+
+  .order-info .info-field label {
+    color: #a6a6a6;
+    font-weight: 400;
+  }
+
+  .order-info .info-field.flex {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .order-info .info-field.flex label {
+    width: 3.5rem;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  .order-info .info-field strong {
+    color: #ff9911;
+    font-weight: 700;
+  }
+
+  .agent-info {
+    margin-top: .5rem;
+  }
+
+  .agent-text {
+    padding: 1rem 0 0 .5rem;
+    margin-left: 0;
+  }
+
+  .agent-title {
+    color: #2e2e2e;
+    font-size: 0.7rem;
+  }
+
+  .agent-info .item-media img {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+  }
+
+  .agent-name {
+    color: #2e2e2e;
+    font-size: .7rem;
+    line-height: 1rem;
+  }
+
+  .agent-name span {
+    color: #666;
+  }
+
+  .agent-store {
+    color: #a6a6a6;
+    font-size: .6rem;
+    line-height: 1rem;
+  }
+
+  .agent-info .icon-call {
+    font-size: .85rem;
+    height: 1.75rem;
+    line-height: 1.75rem;
+    width: 1.75rem;
+    border-radius: 50%;
+    text-align: center;
+    border: 1px solid #25ae5f;
+    color: #25ae5f;
+  }
+
+  .map-info {
+    margin-top: .5rem;
+  }
+
+  .map-info .map-text {
+    font-size: .6rem;
+    color: #2e2e2e;
+  }
+
+  .map-info .map-text label {
+    font-weight: 400;
+    color: #a6a6a6;
+  }
+
+  .map-info .item-link .item-inner {
+    background-size: .6rem;
+    background-position: 100% center;
+  }
+
+  .bar-footer {
+    padding: 0;
+    background: #efeff4;
+    height: 2rem;
+    z-index: 15;
+  }
+
+  .bar-footer.row {
+    margin-left: 0;
+  }
+
+  .bar-footer.row .col-50 {
+    width: 50%;
+    margin-left: 0;
+    margin-top: -.3rem;
+  }
+
+  .bar-footer .button {
+    height: 2rem;
+    line-height: 2rem;
+    border-radius: 0;
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 400;
+  }
+
+  .bar-footer .button-lonely {
+    top: 0;
+  }
+
+  .button-accept {
+    background-color: #25ae5f;
+  }
+
+  .button-reject {
+    background-color: #f91;
+  }
+
+  .detail-map {
+    height: 10rem;
+  }
+
+  .uploaded .status-text {
+    color: #f00;
+    font-size: .9rem;
+  }
+
+  .uploaded .item-content {
+    border: 1px solid #f8f8f8;
+  }
+
+  .flow-content {
+    margin-left: 2.5rem;
+    padding: .5rem 0;
+    color: #a6a6a6;
+    font-size: .7rem;
+  }
+
+  .flows {
+    border-left: .15rem solid #eee;
+    padding-left: 1rem;
+  }
+
+  .flow-item {
+    margin-bottom: .5rem;
+    line-height: .8rem;
+    height: 1.7rem;
+  }
+
+  .flow-item .point {
+    position: relative;
+    width: .7rem;
+    height: .7rem;
+    border: 1px solid #eee;
+    background: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    top: 0;
+    left: -1.45rem;
+  }
+
+  .flow-item.current label {
+    color: #2e2e2e;
+  }
+
+  .flow-item.current span {
+    color: #666;
+  }
+
+  .flow-item.active .point {
+    background: #25ae5f;
+  }
+
+  .flow-item label {
+    margin-left: -.75rem;
+    position: relative;
+    top: -.1rem;
+  }
+
+  .flow-item span {
+    font-size: .6rem;
+  }
+
+  .flow-item:last-child {
+    height: initial;
+  }
+
+  .flow-item:last-child .point{
+    vertical-align: bottom;
+  }
+
+  .flow-item:last-child label {
+    top: 0;
+  }
+
+  /* 楼栋标注 */
+  .detail-map-wrap {
+    position: absolute;
+    width: 100%;
+  }
+
+  .label-tip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 14;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 100%;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+    font-size: 0.6rem;
+    color: #fff;
+    background-color: rgba(31, 29, 17, .7);
+  }
+
+  .label-tip .text {
+    -webkit-flex: 1;
+    flex: 1;
+    padding-left: 0.6rem;
+    padding-right: 0.1rem;
+  }
+
+  .label-tip .color-f91 {
+    color: #f91;
+  }
+
+  .label-tip .btn {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    width: 4rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+    margin-right: 5px;
+    text-align: center;
+    background: #25ae5f;
+    border-radius: 0.6rem;
+    color: #fff;
+  }
+
+  .label-tip .btn .icon {
+    font-size: 0.6rem;
+    margin-right: 0.2rem;
+  }
+
+  .order-status.layout .item-inner {
+    background-size: .6rem;
+    background-position: 100% center;
+    min-height: 1.6rem;
+  }
+
+  .order-status.layout .item-inner:after {
+    content: initial;
+  }
+
+  .order-status.layout .status-text {
+    font-size: .7rem;
+  }
+
+  .img-box {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    align-items: center;
+    justify-content: center;
+    height: 7rem;
+    padding: 0.3rem;
+    border-top: 1px solid #EEE;
+  }
+
+  .img-box img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .process-state {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    height: 1.55rem;
+    line-height: 1.55rem;
+    padding-right: 0.375rem;
+    padding-left: 0.375rem;
+    color: #FDDEB5;
+    font-size: 0.7rem;
+    background-color: #F91;
+  }
+
+  .process-state.finish {
+    background-color: #25AE5F;
+    color: #BEFFDA;
+  }
+
+  .process-state:before,.process-state:after {
+    position: absolute;
+    left: -0.5rem;
+    content: '';
+    font-size: 0;
+    line-height: 0;
+    border-color: #F91;
+    border-style: dashed;
+    border-left-style: solid;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .process-state.finish:before,.process-state.finish:after {
+    border-color: #25AE5F;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .process-state:before {
+    top: 0;
+    /* border-width: 0 0.25rem 0.725rem 0; */
+    border-width: 0 0.5rem 0.725rem 0;
+  }
+
+  .process-state:after {
+    bottom: 0;
+    border-width: 0.725rem 0.5rem 0 0;
+  }
+
+  .high-text {
+    font-size: 0.7rem;
+    color: #FFF;
+  }
+
+  .no-img {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    -webkit-flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 7rem;
+    border-top: 1px solid #EEE;
+    border-bottom: 2px solid #fff;
+    background-color: #F0F0F0;
+  }
+
+  .no-img .icon {
+    line-height: 1;
+    font-size: 2.25rem;
+    color: #25AE5F;
+  }
+
+  .no-img .btn-set {
+    display: block;
+    margin-top: 0.5rem;
+    width: 5.625rem;
+    height: 1.6rem;
+    line-height: 1.6rem;
+    border-radius: 0.75rem;
+    color: #FFF;
+    font-size: 0.7rem;
+    text-align: center;
+    background-color: #25AE5F;
+  }
+</style>

@@ -1,0 +1,36 @@
+<a class="tab-item external{{=data.index == 0 ? ' active' : ''}}" href="javascript:;" data-index="0" data-href="">
+  <span class="icon icon-pai"></span>
+  <span class="tab-label">派单</span>
+</a>
+<a class="tab-item external{{=data.index == 1 ? ' active' : ''}}" href="javascript:;" data-index="1" data-href="/order">
+  <span class="icon icon-order"></span>
+  <span class="tab-label">订单</span>
+</a>
+<a class="tab-item external{{=data.index == 2 ? ' active' : ''}}" href="javascript:;" data-index="2" data-href="/profile">
+  <span class="icon icon-user"></span>
+  <span class="tab-label">我的</span>
+</a>
+
+<script>
+  var coala = require('coala')
+
+  module.exports = {
+    listen: {
+      update: function() {
+        this.data.index = coala.navIndex || 0
+      }
+    },
+
+    events: {
+      'click .tab-item': 'switchTab'
+    },
+
+    handle: {
+      switchTab: function (e) {
+        var $cur = $(e.currentTarget)
+        coala.navIndex = $cur.data('index')
+        coala.cr.go($cur.data('href'))
+      }
+    }
+  }
+</script>

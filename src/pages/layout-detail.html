@@ -1,0 +1,453 @@
+<!-- 户型图详情页面 -->
+<div class="page page-current">
+  <div id="content" class="content">
+    <div class="no-data" id="noData">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无数据</div>
+    </div>
+  </div>
+  <div id="preview"></div>
+</div>
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+
+  module.exports = {
+    data: {
+      cname: 'layout'
+    },
+    listen: {
+      mount: function () {
+        coala.setTitle('户型图详情');
+        this.render();
+      },
+      showPreview: function () {
+        var _this = this;
+        var initialSlide = $('.js-preview').index(this.$previewTarget);
+
+        // 查看大图
+        if (!this.previewMd) {
+          require.ensure([], function () {
+            var preview = require('../components/layout-detail/preview.html');
+            _this.previewMd = coala.component(preview);
+            _this.previewMd.data = {
+              imgArray: _this.previewImgArray,
+              initialSlide: initialSlide
+            };
+            _this.previewMd.parent = _this;
+            _this.previewMd.mount('#preview');
+          });
+        } else {
+          this.$('#preview').removeClass('dn');
+          this.previewMd.layerSwiper.slideTo(initialSlide, 0);
+        }
+      },
+      hidePreview: function () {
+        // 给路由触发
+         this.$('#preview').addClass('dn');
+      }
+    },
+    mixins: {
+      render: function () {
+        // 请求接口数据，根据户型图类型异步加载不同的页面
+        var _this = this;
+
+        // 定义放大图片的图片数组
+        this.previewImgArray = [];
+
+        $.ajax({
+          type: 'GET',
+          data: {
+            personId: coala.personId,
+            appointmentId: coala.surveyDetailData.id
+          },
+          url: config.layoutUrl + 'layoutSetDetail',
+          beforeSend: function () {
+            $.showIndicator();
+          },
+          complete: function () {
+            $.hideIndicator();
+          }
+        }).done(function (result) {
+          if (result.code !== 'C0000') {
+            $.toast(result.msg);
+            return;
+          }
+
+          if ($.isEmptyObject(result.data)) {
+            _this.$('#noData').show();
+            return;
+          }
+
+          switch (result.data.uploadWay) {
+            case 'HOOK': {
+              // 已挂接类型
+              require.ensure([], function () {
+                var mounted = require('../components/layout-detail/mounted.html');
+                _this.mountedMd = coala.component(mounted);
+                _this.mountedMd.data = $.extend({}, coala.surveyDetailData, result.data);
+                _this.mountedMd.parent = _this;
+
+                // 生成 preview 的图片数据
+                var layoutSelects = result.data.layoutSelects;
+                for (var i = 0, len = layoutSelects.length; i < len; i++) {
+                  if (layoutSelects[i].hookUrl.indexOf('{size}') >= 0) {
+                    _this.mountedMd.data.layoutSelects[i].hookHttpUrl = config.repaceImgUrl(layoutSelects[i].hookUrl, '400x300');
+                    _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].hookUrl, '600x450') });
+                  } else {
+                    _this.mountedMd.data.layoutSelects[i].hookHttpUrl = layoutSelects[i].hookUrl;
+                    _this.previewImgArray.push({ url: layoutSelects[i].hookUrl });
+                  }
+
+                  // 处理数据同 setUpLayout 请求参数一致
+                  _this.mountedMd.data.layoutSelects[i].hookUrl = _this.mountedMd.data.layoutSelects[i].hookFastDfsUrl;
+                }
+
+                _this.mountedMd.mount('#content');
+              });
+              break;
+            }
+            case 'REFERENCE': {
+              // 参考图类型
+              require.ensure([], function () {
+                var reference = require('../components/layout-detail/reference.html');
+                _this.referenceMd = coala.component(reference);
+                _this.referenceMd.data = $.extend({}, coala.surveyDetailData, result.data);
+                _this.referenceMd.parent = _this;
+
+
+                var layoutSelects = result.data.layoutSelects;
+                for (var i = 0, len = layoutSelects.length; i < len; i++) {
+                  if (layoutSelects[i].uploadReferenceUrl.indexOf('{size}') >= 0) {
+                    _this.referenceMd.data.layoutSelects[i].uploadReferenceHttpUrl = config.repaceImgUrl(layoutSelects[i].uploadReferenceUrl, '400x300');
+                    _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].uploadReferenceUrl, '600x450') });
+                  } else {
+                    _this.referenceMd.data.layoutSelects[i].uploadReferenceHttpUrl = layoutSelects[i].uploadReferenceUrl;
+                    _this.previewImgArray.push({ url: layoutSelects[i].uploadReferenceUrl });
+                  }
+
+                  if (layoutSelects[i].drawReferenceUrl) {
+                    if (layoutSelects[i].drawReferenceUrl.indexOf('{size}') >= 0) {
+                      _this.referenceMd.data.layoutSelects[i].drawReferenceHttpUrl = config.repaceImgUrl(layoutSelects[i].drawReferenceUrl, '400x300');
+                      _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].drawReferenceUrl, '600x450') });
+                    } else {
+                      _this.referenceMd.data.layoutSelects[i].drawReferenceHttpUrl = layoutSelects[i].drawReferenceUrl;
+                      _this.previewImgArray.push({ url: layoutSelects[i].drawReferenceUrl });
+                    }
+                  }
+
+                  if (layoutSelects[i].originalReferenceUrl.indexOf('{size}') >= 0) {
+                    _this.referenceMd.data.layoutSelects[i].originalReferenceHttpUrl = config.repaceImgUrl(layoutSelects[i].originalReferenceUrl, '400x300');
+                    _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].originalReferenceUrl, '600x450') });
+                  } else {
+                    _this.referenceMd.data.layoutSelects[i].originalReferenceHttpUrl = layoutSelects[i].originalReferenceUrl;
+                    _this.previewImgArray.push({ url: layoutSelects[i].originalReferenceUrl });
+                  }
+
+                  // 未分配状态下处理数据同 setUpLayout 请求参数一致
+                  _this.referenceMd.data.layoutSelects[i].originalReferenceUrl = _this.referenceMd.data.layoutSelects[i].originalReferenceFastDfsUrl;
+                  _this.referenceMd.data.layoutSelects[i].uploadReferenceUrl = _this.referenceMd.data.layoutSelects[i].uploadReferenceFastDfsUrl;
+                }
+                _this.referenceMd.mount('#content');
+              });
+              break;
+            }
+            case 'DRAFT': {
+              // 草稿图类型
+              require.ensure([], function () {
+                var draft = require('../components/layout-detail/draft.html');
+                _this.draftMd = coala.component(draft);
+                _this.draftMd.data = $.extend({}, coala.surveyDetailData, result.data);
+                _this.draftMd.parent = _this;
+
+
+                var layoutSelects = result.data.layoutSelects;
+                for (var i = 0, len = layoutSelects.length; i < len; i++) {
+                  if (layoutSelects[i].uploadDraftUrl.indexOf('{size}') >= 0) {
+                    _this.draftMd.data.layoutSelects[i].uploadDraftHttpUrl = config.repaceImgUrl(layoutSelects[i].uploadDraftUrl, '400x300');
+                    _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].uploadDraftUrl, '600x450') });
+                  } else {
+                     _this.draftMd.data.layoutSelects[i].uploadDraftHttpUrl = layoutSelects[i].uploadDraftUrl;
+                    _this.previewImgArray.push({ url: layoutSelects[i].uploadDraftUrl });
+                  }
+
+                  if (layoutSelects[i].drawDraftUrl) {
+                    if (layoutSelects[i].drawDraftUrl.indexOf('{size}') >= 0) {
+                      _this.draftMd.data.layoutSelects[i].drawDraftHttpUrl = config.repaceImgUrl(layoutSelects[i].drawDraftUrl, '400x300');
+                      _this.previewImgArray.push({ url: config.repaceImgUrl(layoutSelects[i].drawDraftUrl, '600x450') });
+                    } else {
+                      _this.draftMd.data.layoutSelects[i].drawDraftHttpUrl = layoutSelects[i].drawDraftUrl;
+                      _this.previewImgArray.push({ url: layoutSelects[i].drawDraftUrl });
+                    }
+                  }
+
+                  // 未分配状态下处理数据同 setUpLayout 请求参数一致
+                  _this.draftMd.data.layoutSelects[i].uploadDraftUrl = _this.draftMd.data.layoutSelects[i].uploadDraftFastDfsUrl;
+                }
+
+                _this.draftMd.mount('#content');
+              });
+              break;
+            }
+          }
+        });
+      }
+    },
+    events: {
+     'click .js-preview': 'preview'
+    },
+    handle: {
+      preview: function (e) {
+        this.$previewTarget = this.$(e.currentTarget);
+        coala.cr.go('/layout-detail/preview');
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .dn {
+    display: none;
+  }
+
+  .detail-head {
+    padding-left: 0.8rem;
+  }
+
+  .headline {
+    display: -webkit-flex;
+    display: flex;
+    padding-top: 0.65rem;
+    padding-bottom: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+
+  .head-text {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+    padding-top: 0.15rem;
+    line-height: 1.15rem;
+  }
+
+  .head-layout {
+    -webkit-flex: 1;
+    flex: 1;
+    padding-right: 0.2rem;
+  }
+
+  .process-state {
+    position: relative;
+    height: 1.55rem;
+    line-height: 1.45rem;
+    padding-right: 0.375rem;
+    padding-left: 0.375rem;
+    color: #FFF;
+    font-size: 0.7rem;
+    background-color: #F91;
+  }
+
+  .process-state.finish {
+    background-color: #25AE5F;
+  }
+
+  .process-state:before,
+  .process-state:after {
+    position: absolute;
+    content: '';
+    left: -0.5rem;
+    font-size: 0;
+    line-height: 0;
+    border-color: #F91;
+    border-style: dashed;
+    border-left-style: solid;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .process-state.finish:before,
+  .process-state.finish:after {
+    border-color: #25AE5F;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .process-state:before {
+    top: 0;
+    border-width: 0 0.5rem 0.725rem 0;
+  }
+
+  .process-state:after {
+    bottom: 0;
+    border-width: 0.725rem 0.5rem 0 0;
+  }
+
+  .draw-number {
+    line-height: 1.425rem;
+    color: #999;
+    font-size: 0.75rem;
+  }
+
+  .btn-info {
+    display: inline-block;
+    margin-left: 0.3rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.15rem;
+    width: 2.925rem;
+    height: 1.425rem;
+    text-align: center;
+    color: #999;
+    background-color: #FFF;
+    border: 1px solid #DADADA;
+  }
+
+  .color-a6a6a6 {
+    color: #A6A6A6;
+  }
+
+  .detail-main {
+    margin-bottom: 0.5rem;
+    background-color: #FFF;
+    color: #333;
+  }
+
+  .img-box-wrap {
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .img-box {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0.9rem;
+    min-height: 5rem;
+  }
+
+  .img-box-wrap .img-box:nth-child(2) {
+    padding-left: 0.2rem;
+  }
+
+  .layout-type {
+    position: absolute;
+    top: 0.325rem;
+    left: 0.5rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    height: 1.725rem;
+    line-height: 1.725rem;
+    color: #FFF;
+    font-size: 0.6rem;
+    background-color: #606060;
+    border-radius: 0.875rem;
+    ;
+  }
+
+  .img-box img {
+    max-width: 100%;
+    min-height: 2rem;
+    max-height: 6.725rem;
+  }
+
+  .description {
+    padding-left: 0.5rem;
+  }
+
+  .desc-item {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    line-height: 1;
+    font-size: 0.7rem;
+    border-bottom: 1px solid #EAEAEA;
+  }
+
+  .desc-item-title {
+    padding-right: 0.3rem;
+  }
+
+  .description .desc-item:last-child {
+    border-bottom: none;
+  }
+
+  .desc-gap {
+    padding-left: 1.4rem;
+  }
+
+  .remark {
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .remark-inner {
+    -webkit-flex: 1;
+    flex: 1;
+    padding-right: 0.2rem;
+    margin-top: -0.2rem;
+    line-height: 1.1rem;
+  }
+
+  .original {
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .original-img {
+    width: 7.05rem;
+    height: 4.375rem;
+  }
+
+  .original-img img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .btn-reset {
+    position: fixed;
+    bottom: 0;
+    z-index: 99;
+    width: 100%;
+    height: 2rem;
+    line-height: 2rem;
+    color: #FFF;
+    text-align: center;
+    font-size: 0.8rem;
+    background-color: #25AE5F;
+  }
+
+  .fixed-gap {
+    height: 2rem;
+  }
+
+  .layout-type-mounted {
+    left: -0.7rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+    background-color: #25AE5F;
+  }
+
+  .layout-type-mounted .icon-guajie {
+    margin-top: -2px;
+    padding-right: 0.225rem;
+    font-size: 0.75rem;
+  }
+
+  .no-data {
+    display: none;
+    margin-top: 4rem;
+    color: #a6a6a6;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .no-data img {
+    height: 8rem;
+  }
+</style>

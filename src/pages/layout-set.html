@@ -1,0 +1,379 @@
+<!-- 设置户型图页面 -->
+<div class="page page-current">
+  <div id="content" class="content">
+    <div class="detail-head">
+      <div class="headline">
+        <div class="head-text">
+          户型：
+          <span class="head-layout">{{=coala.surveyDetailData.bedRoom || '0'}}房{{=coala.surveyDetailData.livingRoom || '0'}}厅{{=coala.surveyDetailData.kitChen || '0'}}厨{{=coala.surveyDetailData.bathRoom || '0'}}卫 {{!coala.surveyDetailData.direction}} {{=coala.surveyDetailData.buildArea || '0'}}m²</span>
+        </div>
+        <span class="instruct" id="instruct">说明</span>
+      </div>
+    </div>
+    <div id="main"></div>
+  </div>
+</div>
+<script>
+  var coala = require('coala');
+
+  module.exports = {
+    data: {
+      cname: 'layout'
+    },
+    listen: {
+      mount: function () {
+        coala.setTitle('设置户型图');
+        this.render();
+      },
+    },
+    mixins: {
+      render: function () {
+        // 请求接口数据，判断路由是不是从户型图详情的 ”重新设置“ 里跳来，相应的异步挂载不同的页面
+        if (this.fromPage) {
+          switch (this.fromPage) {
+            case 'mount':
+            this.showMount(coala.layoutDetailData);
+            break;
+
+            case 'reference':
+            this.showRefer(coala.layoutDetailData);
+            break;
+
+            case 'draft':
+            this.showDraft(coala.layoutDetailData);
+            break;
+          }
+        } else {
+          // 主功能界面
+          this.showSwiper();
+        }
+      },
+      showSwiper: function () {
+        var _this = this;
+        this.curMdName = 'swiper';
+        require.ensure([], function () {
+          var swiper = require('../components/layout-set/swiper.html');
+          _this.swiperMd = coala.component(swiper);
+          _this.swiperMd.parent = _this;
+          _this.swiperMd.mount('#main');
+        });
+      },
+      showMount: function (data) {
+        var _this = this;
+        this.curMdName = 'mount';
+        this.swiperMd && this.swiperMd.unmount();
+
+        // 挂接类型
+        require.ensure([], function () {
+          var mount = require('../components/layout-set/mount.html');
+          _this.mountMd = coala.component(mount);
+          data && (_this.mountMd.data = data);
+          _this.mountMd.parent = _this;
+          _this.mountMd.mount('#main');
+        });
+      },
+      showRefer: function (data) {
+        var _this = this;
+        this.curMdName = 'reference';
+        this.swiperMd && this.swiperMd.unmount();
+
+        // 参考图类型
+        require.ensure([], function () {
+          var reference = require('../components/layout-set/reference.html');
+          _this.referenceMd = coala.component(reference);
+          data && (_this.referenceMd.data = data);
+          _this.referenceMd.parent = _this;
+          _this.referenceMd.mount('#main');
+        });
+      },
+      showDraft: function (data) {
+        var _this = this;
+        this.curMdName = 'draft';
+        this.swiperMd && this.swiperMd.unmount();
+
+        // 草稿图类型
+        require.ensure([], function () {
+          var draft = require('../components/layout-set/draft.html');
+          _this.draftMd = coala.component(draft);
+          data && (_this.draftMd.data = data);
+          _this.draftMd.parent = _this;
+          _this.draftMd.mount('#main');
+        });
+      },
+    },
+    events: {
+      'click #instruct': 'instruct'
+    },
+    handle: {
+      instruct: function () {
+        coala.cr.go('/layout-instruct');
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .content {
+    color: #333;
+  }
+
+  .detail-head {
+    padding-left: 0.8rem;
+  }
+
+  .headline {
+    display: -webkit-flex;
+    display: flex;
+    padding-top: 0.8rem;
+    padding-bottom: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+  }
+
+  .head-text {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+    line-height: 1.15rem;
+  }
+
+  .head-layout {
+    -webkit-flex: 1;
+    flex: 1;
+    padding-right: 0.2rem;
+  }
+
+  .instruct {
+    padding-right: 0.5rem;
+    color: #25AE5F;
+    font-size: 0.75rem;
+    font-weight: normal;
+  }
+
+  .detail-main {
+    margin-bottom: 0.5rem;
+    background-color: #FFF;
+    color: #333;
+  }
+
+  .detail-main .img-box {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0.9rem;
+    padding-right: 0.2rem;
+    min-height: 5rem;
+  }
+
+  .detail-main .img-box img {
+    max-width: 100%;
+    min-height: 2rem;
+    max-height: 6.725rem;
+  }
+
+  .layout-type {
+    position: absolute;
+    top: 0.325rem;
+    left: 0.5rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    height: 1.725rem;
+    line-height: 1.725rem;
+    color: #FFF;
+    font-size: 0.6rem;
+    background-color: #606060;
+    border-radius: 0.875rem;
+    ;
+  }
+
+  .btn-del {
+    position: absolute;
+    top: 3.175rem;
+    right: 0.55rem;
+    width: 2.475rem;
+    height: 1.475rem;
+    line-height: 1.475rem;
+    text-align: center;
+    color: #FFF;
+    font-size: 0.6rem;
+    background-color: #F91;
+    border-radius: 0.15rem;
+  }
+
+  .description {
+    padding-left: 0.5rem;
+  }
+
+  .desc-gap {
+    padding-left: 1.4rem;
+  }
+
+  .desc-half-gap {
+    padding-left: 0.35rem;
+  }
+
+  .layout-type-mounted {
+    left: -0.7rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+    background-color: #25AE5F;
+  }
+
+  .layout-type-mounted .icon-guajie {
+    margin-top: -2px;
+    padding-right: 0.225rem;
+    font-size: 0.75rem;
+  }
+
+  .continue-tips {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1rem;
+    font-size: 0.6rem;
+  }
+
+  .continue-tips .icon {
+    position: absolute;
+    margin-left: 4.2rem;
+    margin-top: 0.4rem;
+    /* margin-left: 0.25rem; */
+    font-size: 1.7rem;
+    color: #C2C2C2;
+  }
+
+  /* sui 列表样式重置 */
+
+  .list-block {
+    margin: 0;
+    font-size: 0.7rem;
+  }
+
+  .list-block .item-content {
+    padding-left: 0
+  }
+
+  .list-block ul:before {
+    background-color: #FFF;
+  }
+
+  .list-block .item-inner:after {
+    background-color: #EAEAEA;
+  }
+
+  .list-block ul:after {
+    background-color: #FFF;
+  }
+
+  .list-block .item-title {
+    width: 5.5rem;
+    color: #A6A6A6;
+  }
+
+  .list-block input[type="text"],
+  .list-block input[type="number"],
+  .list-block textarea {
+    padding-left: 0;
+    font-size: 0.7rem;
+  }
+
+  .list-block textarea {
+    height: 4rem;
+    line-height: 1.5;
+  }
+
+  /* sui 列表样式重置 结束 */
+
+  .align-roof {
+    align-self: flex-start;
+  }
+
+  .item-top-gap {
+    margin-top: 0.3rem;
+  }
+
+  .upload-box {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    padding-top: 0.35rem;
+    padding-bottom: 0.725rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .upload-box.center {
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  .upload-box.center .btn-upload {
+    margin: 0;
+    background-color: #FFF;
+  }
+
+  .upload-item {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    -webkit-align-items: center;
+    justify-content: center;
+    align-items: center;
+    width: 5rem;
+    height: 5rem;
+    margin-top: 0.5rem;
+    overflow: hidden;
+    margin-right: 0.5rem;
+    border: 1px solid #CDCDCD;
+  }
+
+  .upload-item img {
+    width: 100%;
+  }
+
+  .btn-upload {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    color: #A0A0A0;
+  }
+
+  .btn-upload .icon {
+    color: #25AE5F;
+    font-size: 1.45rem;
+  }
+
+  .upload-text {
+    line-height: 0.95rem;
+    text-align: center;
+    font-size: 0.55rem;
+  }
+
+  .btn-submit {
+    position: fixed;
+    bottom: 0;
+    z-index: 99;
+    width: 100%;
+    height: 2rem;
+    line-height: 2rem;
+    color: #FFF;
+    text-align: center;
+    font-size: 0.8rem;
+    background-color: #F91;
+  }
+
+  .fixed-gap {
+    height: 2rem;
+  }
+
+  .dn {
+    display: none;
+  }
+</style>

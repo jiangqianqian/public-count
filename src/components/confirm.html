@@ -1,0 +1,83 @@
+<div class="popup popup-confirm confirm2" style="height: {{=data.height}}rem; z-index: {{=data.zindex}};">
+  <div class="content">
+    <div class="content-title">{{!data.title}}</div>
+    <div class="row">
+      <div class="col-50"><a href="javascript:;" class="close-popup button button-confirm">确 认</a></div>
+      <div class="col-50"><a href="javascript:;" class="close-popup button button-cancel">取 消</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  module.exports = {
+    data: {title: '确认？', height: 7.5, zindex: 9},
+
+    mixins: {
+      show: function() {
+        $.popup('.confirm2')
+      },
+
+      hide: function() {
+        $.closeModal('.confirm2')
+      }    
+    },
+
+    events: {
+      'click .button-confirm': 'confirm',
+      'click .button-cancel': 'cancel'
+    },
+
+    handle: {
+      confirm: function() {
+        this.trigger('confirm')
+      }, 
+      
+      cancel: function() {
+        this.trigger('cancel')
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .popup-confirm {
+    top: initial;
+    bottom: 0;
+  }
+
+  .popup-confirm .content {
+    text-align: center;
+    color: #7b7f83;
+    font-size: 0.7rem;
+    font-weight: 400;
+  }
+
+  .popup-confirm .content-title {
+    padding: 0.55rem;
+    border-top: 1px solid #F0F0F0;
+  }
+
+  .popup-confirm .row {
+    padding: 0 0.5rem;
+  }
+
+  .popup-confirm .button {
+    font-size: 0.6rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+    height: 1.5rem;
+    color: #ffffff;
+  }
+
+  .popup-confirm .button-confirm {
+    border-radius: 6px;
+    background-color: #25ae5f;
+    border-color: #25ae5f;
+  }
+
+  .popup-confirm .button-cancel {
+    border-radius: 6px;
+    background-color: #ff9911;
+    border-color: #ff9911;
+  }
+</style>

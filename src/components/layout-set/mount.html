@@ -1,0 +1,257 @@
+<div id="detailContainer"></div>
+<div class="continue-tips">
+  <span>
+     本房源存在多层楼 ?
+     <br/>
+     继续挂接下一层户型图
+  </span>
+  <i class="icon icon-xiangxia"></i>
+</div>
+<div id="swiper"></div>
+<a class="btn-submit" id="submit" href="javascript:;">提交</a>
+<div class="fixed-gap"></div>
+<script>
+  var coala = require('coala');
+  var config = require('../../utils/config');
+  var dataset = require('./dataset');
+  var mountItem = require('./mount-item.html');
+
+  module.exports = {
+    refs: {
+      swiper: {
+        el: '#swiper',
+        data: {
+          type: 'mount'
+        },
+        component: require('./swiper.html')
+      }
+    },
+    data: {
+      // 传给后端的参数集
+      layoutSelects: []
+    },
+    listen: {
+      mount: function () {
+        this.appendItems(this.data.layoutSelects);
+        this.initPicker();
+      }
+    },
+    mixins: {
+      reRender: function (data) {
+        // 点击挂接按钮后更新数据
+        this.data.layoutSelects = this.data.layoutSelects.concat(data.layoutSelects);
+        this.appendItems(data.layoutSelects);
+
+        this.initPicker();
+        this.refs.swiper.initSwiper();
+      },
+      appendItems: function (layoutSelects) {
+        this.$('#detailContainer').append(mountItem({
+          layoutSelects: layoutSelects
+        }));
+        $.each(this.$('img[data-src]'), function () {
+          var $self = $(this);
+          config.imgLoad($self, $self.data('src'));
+        });
+      },
+      initPicker: function () {
+        var _this = this;
+
+        // 更新完数据之后执行 picker
+        $.each(this.$('.floor-picker'), function () {
+          var $this = $(this);
+          var picker = $this.picker({
+            toolbarTemplate: '<header class="bar bar-nav">\
+            <button class="button button-link pull-right close-picker">确定</button>\
+            <h1 class="title">请选择楼层数</h1>\
+            </header>',
+            cols: [
+              {
+                textAlign: 'center',
+                values: dataset.floorArray,
+              }
+            ],
+            onOpen: function () {
+              // 解决当删除某层户型图时，其他层户型图选择层数时，弹出的 picker 的选中层数不能更新到
+              var index = _this.$('.floor-picker').index($this);
+              var layerCn = _this.data.layoutSelects[index].layerCn;
+              $this.picker('setValue', [layerCn ? layerCn : '一层'], 0);
+            },
+            onClose: function () {
+              // 层数变化后保存数据到 details, 后面作为参数传给后端
+              var index = _this.$('.floor-picker').index($this);
+              _this.data.layoutSelects[index].layer = dataset.layerReverse[$this.val()];
+              _this.data.layoutSelects[index].layerCn = $this.val();
+            }
+          });
+        });
+      },
+      isNumber: function ($input) {
+        if ($input[0].validity.badInput) {
+          $.toast('层高须为数字');
+          return false;
+        } else if ($input[0].value.indexOf('.') >= 0) {
+          $.toast('层高须为整数');
+          return false;
+        } else {
+          return true;
+        }
+      }
+    },
+    events: {
+      'click .btn-del': 'del',
+      'click #submit': 'submit',
+      'input .js-height': 'isNumber',
+    },
+    handle: {
+      del: function (e) {
+        var _this = this;
+
+        $.modal({
+          text: '确定要删除吗？',
+          buttons: [{
+            text: '手误，不删除',
+            onClick: function () { }
+          },
+          {
+            text: '确定',
+            onClick: function () {
+              // 全部删除，则界面恢复为有三个按钮的原始状态
+              if (_this.$('.btn-del').length <= 1) {
+                _this.parent.mountMd.unmount();
+                _this.parent.showSwiper();
+              } else {
+                // 将删除的数据排除后更新页面
+                var $cur = _this.$(e.currentTarget);
+                var index = _this.$('.btn-del').index($cur);
+                _this.data.layoutSelects.splice(index, 1);
+                $cur.parents('.detail-main').remove();
+              }
+            }
+          }]
+        });
+      },
+      submit: function () {
+        if (this.submiting) {
+          return;
+        }
+
+        var _this = this;
+
+        var layoutSelects = this.data.layoutSelects;
+
+        // 判断层数是否为空
+        // 可能不存在这种情况, 因为默认为一层
+        // for (var i = 0, len = layoutSelects.length; i < len; i++) {
+        //   if (!layoutSelects[i].layer || layoutSelects[i].layer === '') {
+        //     $.alert('层数未填');
+        //     return;
+        //   }
+        // }
+
+        // 判断是否存在相同的层数
+        for (var i = 0, len = layoutSelects.length; i < len; i++) {
+          for (var j = i + 1; j < len; j++) {
+            if (layoutSelects[i].layer === layoutSelects[j].layer) {
+              $.alert('存在相同层数，不同户型图层数必须唯一');
+              return;
+            }
+          }
+        }
+
+        var isValidValue = null;
+        $.each(this.$('.js-height'), function (index) {
+          var $this = $(this);
+          isValidValue = _this.isNumber($this);
+          if (!isValidValue) {
+            // 退出循环
+            return false;
+          } else {
+            var height = parseInt($this.val(), 10);
+
+            // 判断层高是由在1500mm ~ 10000mm间
+            if (height < 1500 || height > 10000) {
+              isValidValue = false;
+              $.toast('层高需要在1500mm到10000mm之间');
+              return false;
+            } else {
+              _this.data.layoutSelects[index].layerHeight = height;
+            }
+          }
+        });
+
+        if (!isValidValue) {
+          return;
+        }
+
+        $.modal({
+          text: '确定要挂接此户型图吗？',
+          buttons: [{
+            text: '手误，不挂接',
+            onClick: function () { }
+          },
+          {
+            text: '确定',
+            onClick: function () {
+              // 请求接口并跳转页面
+              var param = {
+                submitPerson: {
+                  id: coala.personId
+                },
+                house: {
+                  id: coala.surveyDetailData.houseId
+                },
+                room: {
+                  id: coala.surveyDetailData.roomId
+                },
+                surveyAppointment: {
+                  id: coala.surveyDetailData.id
+                },
+                uploadWay: 'HOOK'
+              };
+
+              var simplifyArray = [];
+
+              for (var i = 0, len = layoutSelects.length; i < len; i++) {
+                simplifyArray[i] = {};
+                simplifyArray[i].imageIdc = layoutSelects[i].hookImageIdc ? layoutSelects[i].hookImageIdc : layoutSelects[i].imageIdc;
+                simplifyArray[i].hookUrl = layoutSelects[i].hookUrl;
+                simplifyArray[i].hookId = layoutSelects[i].hookId;
+                simplifyArray[i].layer = layoutSelects[i].layer;
+                layoutSelects[i].layerHeight && (simplifyArray[i].layerHeight = layoutSelects[i].layerHeight);
+              }
+
+              var data = $.extend({}, param, { layoutSelects: simplifyArray });
+
+              // console.log(data,'挂接提交的数据');
+              $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                url: config.layoutUrl + 'setUpLayout',
+                beforeSend: function () {
+                  $.showIndicator();
+                  _this.submiting = true;
+                },
+                complete: function () {
+                  $.hideIndicator();
+                  _this.submiting = false;
+                }
+              }).done(function (result) {
+                if (result.code !== 'C0000') {
+                  $.toast(result.msg);
+                  return;
+                }
+
+                coala.cr.go('/detail/' + coala.surveyDetailData.id);
+              });
+            }
+          }]
+        });
+      },
+      isNumber: function (e) {
+        this.isNumber(this.$(e.currentTarget));
+      }
+    }
+  }
+  </script>

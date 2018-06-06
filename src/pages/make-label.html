@@ -1,0 +1,257 @@
+<div class="page page-current">
+  <header class="bar bar-nav make-label-bar-nav">
+    <h1 class="title">标注 <span class="color-ffde01">{{=data.buildingName}}</span> 坐标</h1>
+  </header>
+  <div class="bar bar-footer make-label-bar-footer">
+    <a class="make-label-button ok pull-left" id="ok">确定</a>
+    <a class="make-label-button cancel pull-right" id="cancel">取消</a>
+  </div>
+  <div class="content">
+    <svg class="icon icon-ditu-wrap" aria-hidden="true">
+      <use xlink:href="#icon-ditu"></use>
+    </svg>
+    <a class="control-center" id="controlCenter" href="javascript:;">
+      <i class="icon icon-dangqianweizhi"></i>
+    </a>
+    <div class="map-container" id="map">
+    </div>
+  </div>
+</div>
+
+<script>
+  var coala = require('coala');
+  var BMapLib = require('../assets/vendor/RichMarker');
+  var config = require('../utils/config');
+
+  // 定位图标是彩色的，需要用到svg图标
+  require('../assets/font/iconfont');
+
+  module.exports = {
+    listen: {
+      init: function () {
+        this.data.buildingName = coala.makeLabelData.buildingName;
+      },
+      mount: function () {
+        // 放在微信里的标题
+        coala.setTitle('标记坐标');
+        this.renderMap();
+      }
+    },
+    mixins: {
+      renderMap: function () {
+        var _this = this;
+
+        var lat;
+        var lng;
+
+        // 没有楼栋坐标值，以小区中心点为地图中心点
+        if (!coala.makeLabelData.lat) {
+          lng = coala.gardenCoordinate.lng;
+          lat = coala.gardenCoordinate.lat;
+        } else {
+          lng = coala.makeLabelData.lng;
+          lat = coala.makeLabelData.lat;
+        }
+        this.bMap = config.initMap({
+          el: 'map',
+          lng: lng,
+          lat: lat,
+          level: 17
+        });
+
+        // 当前用户所在位置
+        var geolocation = new BMap.Geolocation();
+        geolocation.getCurrentPosition(function (r) {
+          _this.currentPosition = r.point;
+
+          // 画当前位置
+          if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+            var html = '<div class="circle-pos-bg"><i class="circle-pos"></i></div>';
+            var mk = new BMapLib.RichMarker(html, r.point, {
+              "anchor": new BMap.Size(-9, -9)
+            });
+            _this.bMap.addOverlay(mk);
+          } else {
+            $.toast("获取定位失败!");
+          }
+        }, {
+          enableHighAccuracy: true
+        });
+      },
+    },
+    events: {
+      'click #controlCenter': 'backCenter',
+      'click #ok': 'ok',
+      'click #cancel': 'cancel'
+    },
+    handle: {
+      backCenter: function () {
+        this.currentPosition && this.bMap.panTo(this.currentPosition);
+      },
+      ok: function (e) {
+        var _this = this;
+        $.modal({
+          text: '确定标注' + _this.data.buildingName + '坐标为最新的点吗？',
+          extraClass: 'make-label-modal',
+          buttons: [{
+              text: '确定',
+              onClick: function () {
+                var mapCenterPoint = _this.bMap.getCenter();
+                $.ajax({
+                  data: {
+                    personId: coala.personId,
+                    buildingId: coala.makeLabelData.buildingId,
+                    lat: mapCenterPoint.lat,
+                    lng: mapCenterPoint.lng
+                  },
+                  url: config.apiUrl + 'saveCoordinate'
+                }).done(function (result) {
+                  if (result.code === 'C0000') {
+                    $.toast('标注成功');
+
+                    // 跳到楼栋标注列表
+                    coala.cr.back();
+                  } else {
+                    $.toast(result.msg);
+                  }
+                });
+              }
+            },
+            {
+              text: '我再想想',
+              onClick: function () {}
+            }
+          ]
+        })
+      },
+
+      // 返回楼栋标注列表
+      cancel: function () {
+        coala.cr.back();
+      }
+    }
+  }
+</script>
+<style scoped>
+  .make-label-bar-nav~.content {
+    top: 2rem;
+  }
+
+  .make-label-bar-footer~.content {
+    bottom: 2rem;
+  }
+
+  .make-label-bar-nav .title {
+    line-height: 2rem;
+    color: #fff;
+    font-weight: normal;
+    background-color: #25ae5f;
+  }
+
+  .color-ffde01 {
+    color: #ffde01;
+  }
+
+  .make-label-bar-nav {
+    height: 2rem;
+  }
+
+  .make-label-bar-footer {
+    height: 2rem;
+    padding-left: 0;
+    padding-right: 0;
+    line-height: 2rem;
+  }
+
+  .make-label-button {
+    width: 50%;
+    text-align: center;
+    color: #fff;
+    font-size: 0.7rem;
+  }
+
+  .make-label-button.ok {
+    background-color: #25ae5f;
+  }
+
+  .make-label-button.cancel {
+    background-color: #f91;
+  }
+
+  .map-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .icon-navigator {
+    font-size: 1.5rem;
+    color: #ff0a0a;
+  }
+
+  .circle-pos-bg {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    padding: 5px;
+    background-color: rgba(255, 10, 10, .19);
+    border-radius: 50%;
+  }
+
+  .circle-pos {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    vertical-align: top;
+    background-color: #ff0a0a;
+    border-radius: 50%;
+  }
+
+  .control-center {
+    position: absolute;
+    z-index: 9999;
+    left: 0.6rem;
+    bottom: 1.05rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 1px 1px 3px rgba(19, 19, 9, .16);
+  }
+
+  .control-center .icon {
+    color: #25ae5f;
+    font-size: 1.3rem;
+    font-weight: bold;
+  }
+
+  .icon-ditu-wrap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -20px;
+    margin-top: -35px;
+    width: 40px;
+    height: 40px;
+    z-index: 100000;
+  }
+</style>
+<style>
+  .make-label-modal .modal-text,
+  .make-label-modal .modal-button {
+    font-size: 0.75rem;
+  }
+
+  .make-label-modal .modal-inner {
+    padding: 1rem 0.75rem;
+  }
+</style>

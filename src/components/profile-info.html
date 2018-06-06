@@ -1,0 +1,145 @@
+<div class="list-block media-list">
+  <ul>
+    <li class="item-content header">
+      <div class="item-media">
+        {{?data.headUrl}}
+        <img src="{{!data.headUrl}}">
+        {{??}}
+        <img src="assets/img/noavatar.gif">
+        {{?}}
+      </div>
+      <div class="item-inner">
+        <div class="item-title-row">
+          <div class="item-title">{{!data.name}} <span>{{!data.phone}}</span></div>
+        </div>
+        <div class="item-area">服务区域： {{!data.geographyAreaName}}</div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="list-block record-order">
+  <div class="item-content">
+    <div class="item-inner">
+      <div class="item-title">历史订单</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-20">
+      <div class="record-title">{{!data.waitingShoot || '0'}}</div>
+      <div class="record-subtitle">待拍摄</div>
+    </div>
+    <div class="col-20">
+      <div class="record-title">{{!data.waitingUpload || '0'}}</div>
+      <div class="record-subtitle">待上传</div>
+    </div>
+    <div class="col-20">
+      <div class="record-title">{{!data.notPassed || '0'}}</div>
+      <div class="record-subtitle">不通过</div>
+    </div>
+    <div class="col-20">
+      <div class="record-title">{{!data.canceled || '0'}}</div>
+      <div class="record-subtitle">已取消</div>
+    </div>
+    <div class="col-20">
+      <div class="record-title">{{!data.finished || '0'}}</div>
+      <div class="record-subtitle">已完成</div>
+    </div>
+  </div>
+</div>
+
+<div class="list-block label-record" id="labelRecord">
+  <ul>
+    <li class="item-content item-link">
+      <div class="item-inner">
+        <div class="item-title status-title">楼栋标注记录<span class="num">{{!data.markCount}}</span></div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="list-block">
+  <ul>
+    <li class="item-content">
+      <div class="item-inner">
+        <div class="item-title status-title">是否启动接单状态</div>
+        <div class="item-after">
+          <label class="label-switch">
+            <input id="enableStatus" type="checkbox" {{?data.enable == 'YES'}}checked{{?}}>
+            <div class="checkbox"></div>
+          </label>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: function() {
+      return this.fetch()
+    },
+    refs: {
+      nav: {
+        el: '#nav',
+        component: require('../components/nav.html')
+      }
+    },
+
+    mixins: {
+      fetch: function() {
+        return $.ajax({
+          data: {personId: coala.personId},
+          url: config.apiUrl + 'getMyBillInfo'
+        })
+      },
+
+      render: function() {
+        var _this = this
+        this.fetch().then(function(result) {
+          if (result.code == 'C0000') {
+            _this.update(result.data)
+          }
+        })
+      }
+    },
+    listen: {
+      mount: function () {
+        coala.setTitle('我的记录')
+        this.parent.$('.scroll-loading').hide()
+      },
+
+      update: function() {
+        if (this.data.resource) this.data = this.data.resource.data
+      }
+    },
+
+    events: {
+      'change #enableStatus': 'enableStatus',
+      'click #labelRecord': 'labelRecord'
+    },
+
+    handle: {
+      enableStatus: function() {
+        $.showIndicator()
+        var checked = $('#enableStatus').prop('checked')
+        $.ajax({
+          data: {personId: coala.personId, status: checked ? 'YES' : 'NO'},
+          url: config.apiUrl + 'modifyReceiveBillStatus'
+        }).then(function(result) {
+          $.hideIndicator()
+          if (result.code !== 'C0000') {
+            $.toast(result.msg)
+            $('#enableStatus').prop('checked', !checked)
+          }
+        })
+      },
+      labelRecord: function () {
+        coala.cr.go('/label-record');
+      }
+    }
+  }
+</script>

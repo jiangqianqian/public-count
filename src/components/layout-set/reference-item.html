@@ -1,0 +1,75 @@
+{{~data.layoutSelects :value:index }}
+<div class="detail-main">
+  <div class="img-box-wrap">
+    <div class="img-box">
+      <div class="layout-type">参考图</div>
+      <a href="javascript:;" class="btn-del">删除</a>
+      <img data-src="{{!value.originalReferenceHttpUrl}}">
+    </div>
+  </div>
+  <div class="list-block description">
+    <ul>
+      <li class="item-content item-link">
+        <div class="item-inner">
+          <div class="item-title">户型层数：</div>
+          <div class="item-input">
+            <input class="floor-picker" type="text" value="{{=value.layerCn || '一层'}}" readonly>
+          </div>
+        </div>
+      </li>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-title">层高(mm)：</div>
+          <div class="item-input">
+            <input class="js-height" type="number" value="{{!value.layerHeight}}">
+          </div>
+        </div>
+      </li>
+      <li class="item-content item-link">
+        <div class="item-inner">
+          <div class="item-title">参考类型：</div>
+          <div class="item-input">
+            <input class="refer-type" type="text" placeholder="请选择参考类型" value="{{!value.referenceTypeCn}}" readonly>
+          </div>
+        </div>
+      </li>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-title align-roof">备<span class="desc-gap"></span>注：
+          </div>
+          <div class="item-input">
+            <textarea class="js-remark" maxlength="50" placeholder="请输入备注">{{!value.remark}}</textarea>
+          </div>
+        </div>
+      </li>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-title align-roof item-top-gap">参
+            <span class="desc-half-gap"></span>考
+            <span class="desc-half-gap"></span>图：
+          </div>
+          <div class="item-input upload-box">
+            {{?value.uploadReferenceHttpUrl}}
+            <div class="upload-item">
+              <img data-src="{{=value.uploadReferenceHttpUrl}}">
+            </div>
+            {{??}}
+            <div class="upload-item dn">
+              <img src="">
+            </div>
+            <a class="upload-item btn-upload js-upload" href="javascript:;">
+              <div class="icon-wrap"><i class="icon icon-tianjia"></i></div>
+              <div class="upload-text">
+                上传
+                <br/>
+                修正后参考图
+              </div>
+            </a>
+            {{?}}
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+{{~}}

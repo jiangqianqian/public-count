@@ -1,0 +1,150 @@
+<!-- Slider main container -->
+<div class="swiper-container" id="previewSwiper">
+  <!-- Additional required wrapper -->
+  <div class="swiper-wrapper">
+    <!-- Slides -->
+    {{~data.imgArray :value:index}}
+    <div class="swiper-slide">
+      <div class="preview-img-box">
+        <a href="javascript:;" class="preview-btn-check" data-index="{{=index}}">
+          <i class="icon icon-ok1"></i>
+        </a>
+        <img data-src="{{!value.httpUrl}}">
+      </div>
+    </div>
+    {{~}}
+  </div>
+  <!-- <a href="javascript:;" class="btn-download" id="downLoad">
+    <i class="icon icon-xiazai"></i>
+  </a> -->
+</div>
+
+<script>
+  var coala = require('coala');
+  var Swiper = require('swiper/dist/js/swiper');
+  var config = require('../../utils/config');
+
+  require('swiper/dist/css/swiper.css');
+
+  module.exports = {
+    listen: {
+      mount: function () {
+        this.render();
+      },
+    },
+    mixins: {
+      getCheckedImg: function (type) {
+        var _this = this;
+        var array = [];
+        $.each(this.$('.checked'), function () {
+          if (type === 'index') {
+            // 只需要获取被选中的图片的索引
+            array.push($(this).data('index'));
+          } else {
+            // 获取被选中图片的整体信息
+            array.push(_this.data.imgArray[$(this).data('index')]);
+          }
+        });
+
+        return array;
+      },
+      render: function () {
+        var _this = this;
+
+        // init swiper
+        if (this.layerSwiper) this.layerSwiper.destroy();
+
+        this.layerSwiper = new Swiper('#previewSwiper', {
+          initialSlide: _this.data.initialSlide,
+        });
+
+        $.each(this.$('img[data-src]'), function () {
+          var $self = $(this);
+          config.imgLoad($self, $self.data('src'));
+        });
+      }
+    },
+    events: {
+      'click .preview-btn-check': 'checkImg',
+      'click #previewSwiper': 'hide'
+    },
+    handle: {
+      checkImg: function (e) {
+        e.stopImmediatePropagation();
+        this.$(e.currentTarget).toggleClass('checked');
+      },
+      hide: function (e) {
+        coala.cr.back();
+      }
+    }
+  }
+</script>
+<style scoped>
+  .swiper-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 999;
+    background-color: #000;
+  }
+
+  .swiper-slide {
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .preview-btn-check {
+    position: absolute;
+    right: 0.2rem;
+    top: 0.2rem;
+    z-index: 999;
+    line-height: 1;
+  }
+
+  .preview-btn-check .icon {
+    font-size: 2.05rem;
+    color: #929292;
+  }
+
+  .preview-btn-check.checked .icon {
+    color: #25AE5F;
+  }
+
+  .preview-img-box {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .preview-img-box img {
+    max-width: 100%;
+    margin: auto;
+  }
+
+  /* .btn-download {
+    position: fixed;
+    z-index: 999;
+    bottom: 1rem;
+    right: 0.325rem;
+    width: 2.85rem;
+    height: 2.85rem;
+    line-height: 2.85rem;
+    border-radius: 50%;
+    text-align: center;
+    background-color: #808080;
+  }
+
+  .btn-download .icon {
+    font-size: 1.75rem;
+    color: #FFF;
+  } */
+</style>

@@ -1,0 +1,260 @@
+<div class="popup popup-confirm" id="cancelRasonPopup">
+  <div class="content">
+    <div class="content-title">请选择取消的原因</div>
+    <div class="list-block media-list">
+      <ul>
+        <li>
+          <label class="label-checkbox item-content">
+            <input type="radio" name="cancelReason" value="SALE_MAN_REASON">
+            <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+            <div class="item-inner">
+              <div class="item-title-row">
+                <div class="item-title">经纪人原因</div>
+              </div>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="label-checkbox item-content">
+            <input type="radio" name="cancelReason" value="CAMERAMAN_REASON">
+            <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+            <div class="item-inner">
+              <div class="item-title-row">
+                <div class="item-title">摄影师原因</div>
+              </div>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="label-checkbox item-content">
+            <input type="radio" name="cancelReason" value="OWNER_REASON">
+            <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+            <div class="item-inner">
+              <div class="item-title-row">
+                <div class="item-title">业主原因</div>
+              </div>
+            </div>
+          </label>
+        </li>
+        <li class="note-li">
+          <div class="note-title">备注（必填）<span class="note-valid valid-normal" id="noteValidMsg"></span></div>
+          <textarea class="note-textarea" id="noteTextarea"  placeholder="限 30 字"></textarea>
+        </li>
+      </ul>
+    </div>
+    <div class="row">
+      <div class="col-50"><a href="javascript:;" class="button button-confirm">确 认</a></div>
+      <div class="col-50"><a href="javascript:;" class="button button-cancel">取 消</a></div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay"></div>
+
+<script>
+  module.exports = {
+    mixins: {
+      getValue: function() {
+        return {
+          cancelReason: this.$('input:checked').val(),
+          cancelRemark: this.$('#noteTextarea').val().trim()
+        }
+      },
+
+      show: function() {
+        $.popup('#cancelRasonPopup')
+        this.$('.modal-overlay').addClass('modal-overlay-visible')
+      },
+
+      hide: function() {
+        this.$('.modal-overlay').removeClass('modal-overlay-visible')
+        $.closeModal('#cancelRasonPopup')
+      }
+    },
+
+    events: {
+      'click .button-confirm': 'confirm',
+      'click .button-cancel': 'cancel',
+      'click .modal-overlay': 'cancel',
+      'input #noteTextarea': 'textareaHandle'
+    },
+
+    handle: {
+      confirm: function() {
+        var value = this.getValue()
+        if (!value.cancelReason) {
+          return $.toast('请选择取消原因')
+        }
+        if (!value.cancelRemark.length) {
+          return $.toast('请填写取消备注')
+        }
+        if (value.cancelRemark.length > 30) {
+          return $.toast('取消备注已超出字数限制')
+        }
+        // 暴露事件，供外部使用
+        this.trigger('confirm')
+      }, 
+      
+      cancel: function() {
+        // 暴露事件，供外部使用
+        this.trigger('cancel')
+        this.hide()
+      },
+
+      textareaHandle: function(e) {
+        var maxLen = 30
+        var noteLen = $(e.target).val().trim().length
+        if (noteLen > maxLen) {
+          this.$('#noteValidMsg').addClass('note-valid-error').text('已超出 ' + (noteLen - maxLen) + ' 字')
+        } else {
+          this.$('#noteValidMsg').removeClass('note-valid-error').text('还可以输入 ' + (maxLen - noteLen) + ' 字')
+        }
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .popup-confirm {
+    top: initial;
+    bottom: 0;
+    height: 16rem;
+    z-index: 16;
+  }
+
+  .popup-confirm .content {
+    text-align: center;
+    color: #7b7f83;
+    font-size: .7rem;
+    font-weight: 400;
+  }
+
+  .popup-confirm .content-title {
+    padding: .35rem;
+    box-shadow: 0 1px 0 #dddddd;
+    font-weight: 700;
+  }
+
+  .popup-confirm .row {
+    padding: 0 .5rem;
+  }
+
+  .popup-confirm .button {
+    font-size: .6rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+    height: 1.5rem;
+    color: #ffffff;
+  }
+
+  .popup-confirm .button-confirm {
+    border-radius: .3rem;
+    background-color: #25ae5f;
+    border-color: #25ae5f;
+  }
+
+  .popup-confirm .button-cancel {
+    border-radius: .3rem;
+    background-color: #ff9911;
+    border-color: #ff9911;
+  }
+
+  .list-block .item-content {
+    min-height: 1.6rem;
+    padding-left: 1.5rem;
+  }
+
+  /* @media only screen and (max-width: 320px) {
+    .list-block .item-content {
+      padding-left: 6rem;
+    }
+  } */
+
+  .popup-confirm .item-inner {
+    min-height: 1.6rem;
+    line-height: 1.6rem;
+    padding: 0;
+  }
+
+  .list-block.media-list {
+    padding: .4rem 0;
+    background: #efeff4;
+  }
+
+  .list-block ul:before,
+  .list-block ul:after,
+  .list-block .item-inner:after {
+    content: initial;
+  }
+
+  .list-block ul {
+    background: #efeff4;
+  }
+
+  .list-block .item-media+.item-inner {
+    margin-left: .4rem;
+  }
+
+  .list-block.media-list .item-media {
+    padding: 0;
+  }
+
+  .popup-confirm .item-title {
+    font-size: .7rem;
+    padding-top: .3rem;
+  }
+
+  label.label-checkbox input[type=checkbox]:checked+.item-media i.icon-form-checkbox,
+  label.label-checkbox input[type=radio]:checked+.item-media i.icon-form-checkbox {
+    background: #25ae5f;
+  }
+
+  label.label-checkbox i.icon-form-checkbox {
+    width: .8rem;
+    height: .8rem;
+    border-radius: .8rem;
+  }
+
+  .row .col-50 {
+    margin-top: .6rem;
+  }
+  
+  .modal-overlay {
+    z-index: 15;
+    display: none;
+  }
+
+  .modal-overlay-visible {
+    display: block;
+  }
+
+  .note-li {
+    padding: 0 1.5rem;
+  }
+
+  .note-title {
+    padding: .2rem 0;
+    padding-top: .4rem;
+    font-size: .7rem;
+    text-align: left;
+    color: #a6a6a6;
+  }
+
+  .note-valid {
+    color: #7b7f83;
+    float: right;
+  }
+
+  .note-valid-error {
+    color: #ff0000;
+  }
+
+  .note-textarea {
+    font-size: .7rem;
+    line-height: 1rem;
+    height: 3rem;
+    margin: 0 0 .3rem 0;
+    background: #e0e0e0;
+    border-radius: .15rem;
+    padding: .3rem;
+  }
+</style>

@@ -1,0 +1,92 @@
+<div class="list-block media-list">
+  <ul>
+    {{~data.items :item :idx}}
+    <div class="item" data-id="{{!item.id}}">
+      <div class="item-title"><span class="garden ellipsis">{{!item.gardenName}}</span> <span class="build ellipsis">{{!item.buildName}}</span> <span class="ellipsis">{{!item.unitName}}</span> <span class="ellipsis">{{!item.roomNumber}}</span></div>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-subtitle">{{!item.appointmentName}} {{!item.appointmentPhone}}<br>订单编号：{{!item.appointmentNo}}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-ops">
+            <div class="item-date">{{!item.beginHour || '00'}}:{{!item.beginMinute || '00'}}~{{!item.endHour || '00'}}:{{!item.endMinute || '00'}}<br>
+            <span>
+              {{!item.dayLabel}}
+              <span>({{!item.month}}月{{!item.day}}日)</span>
+            </span>
+            </div>
+            <a class="item-finish" href="javascript:;" data-id="{{!item.id}}">完成</a>
+          </div>
+        </div>
+      </li>
+    </div>
+    {{~}}
+  </ul>
+</div>
+
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+  var orderMixin = require('../utils/order-mixin')
+
+  module.exports = {
+    data: function () {
+      return this.fetch()
+    },
+
+    mixins: [{
+      fetchUrl: config.apiUrl + 'getWaitingShoots',
+      
+      fetchParams: {
+        personId: coala.personId,
+        page: 1,
+        pageSize: 10
+      },
+
+      popupConfirm: function() {
+        var _this = this
+        $.showIndicator()
+        $.ajax({
+          // type: 'POST',          
+          data: {personId: coala.personId, id: _this.currentId},
+          url: config.apiUrl + 'finishShoot'
+        }).then(function(result) {
+          $.hideIndicator()
+          if (result.code != 'C0000') {
+            return $.toast(result.msg);
+          }
+          _this.refresh()
+        })
+      }
+
+    }, orderMixin],
+
+    listen: {
+      init: function() {
+        this.fetchParams.page = 1
+      },
+      mount: function() {
+        this.parent.refs.confirmPopup.on('confirm', this.popupConfirm.bind(this))
+      }
+    },
+
+    events: {
+      'click div.item': 'openDetail',
+      'click .item-finish': 'openConfirm'
+    },
+
+    handle: {
+      openDetail: function (e) {
+        // 判断解决事件冒泡的问题，sui 的点透问题还是存在
+       if (e.target.tagName != 'A') {
+         coala.cr.go('/detail/' + $(e.currentTarget).data('id'))
+       }
+      },
+
+      openConfirm: function (e) {
+        this.currentId = $(e.currentTarget).data('id')
+        this.parent.refs.confirmPopup.show()
+      }
+    }
+  }
+</script>

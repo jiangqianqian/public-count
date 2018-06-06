@@ -1,0 +1,395 @@
+<div class="page page-current">
+  <div class="content">
+    <div class="list-block form-tip">
+      <div class="item-content">
+        <div class="tip-text"><span>提示：</span>设置时间后，其它经纪人将不能预约该段时间。</div>
+      </div>
+    </div>
+    <div class="list-block form-info">
+      <ul>
+        <li>
+          <div class="item-content">
+            <div class="buttons-row row select-date">
+              <a href="javascript:;" data-index="0" class="button{{!data.selectedToday ? ' active' : ''}}" data-date="{{!data.todayTime}}">今天 ({{!data.todayMonth + '月' + data.todayDay + '日'}})</a>
+              <a href="javascript:;" data-index="1" class="button{{!data.selectedTomorrow ? ' active' : ''}}" data-date="{{!data.tomorrowTime}}">明天 ({{!data.tomorrowMonth + '月' + data.tomorrowDay + '日'}})</a>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="item-content">
+            <div class="item-inner">
+              <div class="item-title label">拍摄开始时间：</div>
+              <div class="item-input">
+                <input type="text" placeholder="点击选择拍摄开始时间" id="startDate" value="{{!data.shootBeginTime}}" readonly>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <div class="item-content">
+            <div class="item-inner">
+              <div class="item-title label">拍摄结束时间：</div>
+              <div class="item-input">
+                <input type="text" placeholder="点击选择拍摄结束时间" id="endDate" value="{{!data.shootEndTime}}" readonly>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li class="align-top ordered">
+          <div class="item-content label">
+            <div>已预约时间段有<span>（不可交叉设置时间）</span>： </div>
+          </div>
+          <div class="item-content item-input" id="orderedTime">
+            <div style="display: {{!data.selectedToday ? 'block' : 'none'}};">{{!data.todayShootOverTimesStr}}</div>
+            <div style="display: {{!data.selectedTomorrow ? 'block' : 'none'}};">{{!data.tomorrowShootOverTimesStr}}</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="buttons"><a id="ordered" class="button button-big button-fill">确 定</a></div>
+  </div>
+</div>
+<script>
+  var coala = require('coala')
+  var config = require('../utils/config')
+
+  module.exports = {
+    data: function() {
+      if (!coala.curOrder) return coala.cr.back()
+      return this.fetch()
+    },
+    listen: {
+      mount: function () {
+        if (!coala.curOrder) return
+        coala.setTitle('设置拍摄时间')
+        var _this = this
+        this.fetchWorkTime().done(function(result) {
+          if (result.code != 'C0000') {
+            $.toast(result.msg)
+            return coala.cr.back()
+          }
+          _this.workTime = result.data
+          _this.workTime.workStartTime = _this.workTime.workStartTime || '0:00'
+          _this.workTime.workEndTime = _this.workTime.workEndTime || '23:59'
+          _this.renderPicker()
+        })
+      },
+
+      update: function() {
+        if (this.data.resource) {
+          this.data = this.data.resource.data
+          if (this.data.shootBeginTime) {
+            this.data.shootBeginTime = config.timeFormat(this.data.shootBeginTime, ' : ')
+          }
+          if (this.data.shootEndTime) {
+            this.data.shootEndTime = config.timeFormat(this.data.shootEndTime, ' : ')
+          }
+
+          this.data.todayShootOverTimesStr = ''
+          if (this.data.todayShootOverTimes && this.data.todayShootOverTimes.length) {
+            var times = this.data.todayShootOverTimes.map(function(time) {
+              var temp = time.split('-')
+              return config.timeFormat(temp[0], ':') + '-' + config.timeFormat(temp[1], ':')
+            })
+            this.data.todayShootOverTimesStr = times.join('; ')
+          }
+
+          this.data.tomorrowShootOverTimesStr = ''
+          if (this.data.tomorrowShootOverTimes && this.data.tomorrowShootOverTimes.length) {
+            var times = this.data.tomorrowShootOverTimes.map(function(time) {
+              var temp = time.split('-')
+              return config.timeFormat(temp[0], ':') + '-' + config.timeFormat(temp[1], ':')
+            })
+            this.data.tomorrowShootOverTimesStr = times.join('; ')
+          }
+        }
+      },
+
+      unmount: function() {
+        $.closeModal(".picker-modal.modal-in")
+      }
+    },
+
+    mixins: {
+      fetch: function() {
+        return $.ajax({
+          data: {
+            personId: coala.personId,
+            id: coala.curOrder.id,
+            operator: coala.curOrder.status == 'WAITING_ORDER' ? 'receive' : 'edit'
+          },
+          url: config.apiUrl + 'getShootTimeSegment'
+        })
+      },
+
+      fetchWorkTime: function () {
+        return $.ajax({
+          data: {
+            personId: coala.personId
+          },
+          url: config.apiUrl + 'getShootTimes/start'
+        })
+      },
+
+      renderPicker: function() {
+        var _this = this
+        var $active = this.$('.select-date .active')
+        var minTime = this.workTime.workStartTime
+        if ($active.length && $active.data('index') == 0) {
+          var now = new Date()
+          var nowTime = now.getHours() + ' : ' + now.getMinutes()
+          if (_this.diffTime(nowTime, _this.workTime.workStartTime)) minTime = nowTime
+        }
+        var picker = this.$('#startDate').data('picker')
+        if (picker) {
+          picker.destroy()
+          this.$('#startDate').data('picker', '')
+        }
+        picker = this.$('#endDate').data('picker')
+        if (picker) {
+          picker.destroy()
+          this.$('#endDate').data('picker', '')
+        }
+        this.initPicker('startDate', '选择拍摄开始时间', minTime)
+        this.initPicker('endDate', '选择拍摄结束时间', this.$('#startDate').val())
+      },
+
+      diffTime: function(time1, time2) {
+        var arr1 = time1.split(':')
+        var hour1 = +arr1[0]
+        var minute1 = +arr1[1]
+
+        var arr2 = time2.split(':')
+        var hour2 = +arr2[0]
+        var minute2 = +arr2[1]
+
+        if (hour1 > hour2) return true
+        if (hour1 == hour2 && minute1 > minute2) return true
+        return false
+      },
+
+      initPicker: function (id, label, minTime) {
+        var _this = this
+        var hours = []
+        var workStartTime = this.workTime.workStartTime
+        var workEndTime = this.workTime.workEndTime
+        var workStartHour = +workStartTime.split(':')[0]
+        var workEndHour = +workEndTime.split(':')[0]
+        var minHour = +minTime.split(':')[0]
+        var start = minHour > workStartHour ? minHour : workStartHour
+        for (var i = start; i <= workEndHour; i++) {
+          hours.push(i)
+        }
+
+        this.$('#' + id).picker({
+          toolbarTemplate: '<header class="bar bar-nav">' +
+            '<button class="button button-link pull-left close-picker">取消</button>' +
+            '<button class="button button-link pull-right close-picker">确定</button>' +
+            '<h1 class="title">' + label + '</h1>' +
+            '</header>',
+          cols: [{
+              textAlign: 'center',
+              values: hours
+            },
+             {
+              textAlign: 'center',
+              values: [':']
+            },
+            {
+              textAlign: 'center',
+              values: ['00', '10', '20', '30', '40', '50']
+            }
+          ],
+
+          onClose: function() {
+            if (id == 'startDate') {
+              var startTime = _this.$('#startDate').val()
+              var endTime = _this.$('#endDate').val()
+              if (!startTime) return $.toast('请选择拍摄开始时间')
+              if (endTime && !_this.diffTime(endTime, startTime)) {
+                _this.$('#startDate').val('')
+                return $.toast('请选择早于拍摄结束时间')
+              }
+              if (_this.diffTime(_this.workTime.workStartTime, startTime)) {
+                _this.$('#startDate').val('')
+                return $.toast('请选择晚于工作开始时间：' + _this.workTime.workStartTime)
+              }
+              var $active = _this.$('.select-date .active')
+              if ($active.length && $active.data('index') == 0) {
+                if (_this.diffTime(minTime, startTime)) {
+                  _this.$('#startDate').val('')
+                  return $.toast('请选择晚于当前时间')
+                }
+              }
+              var picker = _this.$('#endDate').data('picker')
+              if (picker) {
+                picker.destroy()
+                _this.$('#endDate').data('picker', '').off('*')
+              }
+              _this.initPicker('endDate', '选择拍摄结束时间', startTime)
+            } else {
+              var startTime = _this.$('#startDate').val()
+              var endTime = _this.$('#endDate').val()
+              if (!_this.diffTime(endTime, startTime)) {
+                _this.$('#endDate').val('')
+                return $.toast('请选择晚于开始拍摄时间')
+              }
+              if (_this.diffTime(endTime, _this.workTime.workEndTime)) {
+                _this.$('#endDate').val('')
+                return $.toast('请选择早于工作结束时间：' + _this.workTime.workEndTime)
+              }
+            }
+          }
+        })
+      }
+    },
+
+    events: {
+      'click #ordered': 'ordered',
+      'click .select-date .button': 'switchDate'
+    },
+
+    handle: {
+      ordered: function() {
+        var $date = this.$('.select-date .active')
+        if (!$date.length) return $.toast('请选择日期')
+        var date = $date.data('date')
+        var startTime = this.$('#startDate').val()
+        var endTime = this.$('#endDate').val()
+
+        if (!startDate) return $.toast('请选择拍摄开始时间')
+        if (!endTime) return $.toast('请选择拍摄结束时间')
+
+        var now = new Date()
+        var minTime = now.getHours() + ' : ' + now.getMinutes()
+        var $active = this.$('.select-date .active')
+        if ($active.length && $active.data('index') == 0 && !this.diffTime(startTime, minTime)) return $.toast('拍摄开始时间请晚于当前的时间')
+        if (!this.diffTime(endTime, startTime)) return $.toast('拍摄结束时间请晚于开始的时间')
+
+        $.ajax({
+          type: 'POST',
+          data: {
+            personId: coala.personId,
+            id: coala.curOrder.id,
+            beginShootTime: date.split(' ')[0] + ' ' + startTime.replace(' : ', ':'),
+            endShootTime: date.split(' ')[0] + ' ' + endTime.replace(' : ', ':')
+          },
+          url: config.apiUrl + 'receiveAppointmentBill'
+        }).done(function(result) {
+          if (result.code == 'C0000') {
+            coala.cr.back()
+          } else if(result.code == 'C0005') {
+            $.toast(result.msg)
+          } else {
+            $.toast('系统错误')
+          }
+        })
+      },
+
+      switchDate: function(e) {
+        this.$('.select-date .button').removeClass('active')
+        $(e.target).addClass('active')
+        var index = +$(e.target).data('index')
+        this.$('#orderedTime div').hide()
+        $(this.$('#orderedTime div').get(index)).show()
+        this.$('#startDate').val('')
+        this.$('#endDate').val('')
+        this.renderPicker()
+      }
+    }
+
+  }
+</script>
+
+
+<style scoped>
+  .list-block {
+    margin: 0;
+  }
+
+  .content-block {
+    margin: 0;
+    padding: 0.5rem;
+  }
+
+  .form-tip .item-content {
+    padding: 0.5rem;
+    min-height: initial;
+  }
+
+  .form-tip {
+    background: #ffffff;
+    margin-top: 0.5rem;
+  }
+
+  .form-tip .tip-text {
+    font-size: 0.6rem;
+    color: #666666;
+    line-height: 0.8rem;
+  }
+
+  .form-tip .tip-text span {
+    color: #ff9911;
+  }
+
+  .form-info {
+    margin-top: 0.5rem;
+  }
+
+  .form-info .item-content {
+    padding: 0 0.5rem;
+  }
+
+  .select-date {
+    margin: 0.5rem 0;
+    width: 100%;
+  }
+
+  .select-date .button.active{
+    background-color: #25ae5f;
+    color: #ffffff;
+  }
+
+  .select-date .button {
+    border-color: #25ae5f;
+    color: #25ae5f;
+    line-height: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.7rem;
+    font-weight: 400;
+  }
+
+  .form-info .label {
+    color: #666666;
+    font-size: 0.7rem;
+  }
+
+  .form-info .label span {
+    color: #ff9911;
+  }
+
+  .form-info .item-input, .form-info input {
+    color: #2e2e2e;
+    font-size: 0.7rem;
+  }
+
+  .ordered .item-content {
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  .buttons {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .buttons .button {
+    font-size: 0.7rem;
+    height: 1.8rem;
+    line-height: 1.8rem;
+    border-radius: 5px;
+    background-color: #ff9911;
+  }
+</style>

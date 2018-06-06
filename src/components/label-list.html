@@ -1,0 +1,587 @@
+<div class="buttons-row" id="tabTitleWrap">
+  <a href="#noMarkScroll" class="tab-link button active" data-id="noMarkScroll">未标注（<span id="noMarkCount">0</span>）</a>
+  <a href="#markScroll" class="tab-link button" data-id="markScroll" id="markScrollTab">已标注（<span id="markCount">0</span>）</a>
+</div>
+<div class="tabs label-tabs">
+  <span class="text-width" id="noMarkTextWidth"></span>
+  <span class="text-width" id="markTextWidth"></span>
+  <div class="tab active" id="noMarkScroll">
+    <div class="label-tabs-content" id="noMarkBody">
+    </div>
+    <div class="pagination">
+      <a href="javascript:;" class="prev">
+        <span class="arrow left-arrow"></span>上一页</a>
+      <div class="num">
+        <input value="" id="noMarkPicker" readonly>
+        <div class="bottom-arrow-wrap">
+          <span class="bottom-arrow"></span>
+        </div>
+      </div>
+      <a href="javascript:;" class="next">下一页
+        <span class="arrow right-arrow"></span>
+      </a>
+    </div>
+    <div class="label-indicator-modal">
+      <span class="preloader preloader-white"></span>
+    </div>
+    <div class="no-data">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无数据</div>
+    </div>
+  </div>
+  <div class="tab" id="markScroll">
+    <div class="label-tabs-content" id="markBody">
+    </div>
+    <div class="pagination">
+      <a href="javascript:;" class="prev">
+        <span class="arrow left-arrow"></span>上一页</a>
+      <div class="num">
+        <input value="" id="markPicker" readonly>
+        <div class="bottom-arrow-wrap">
+          <span class="bottom-arrow"></span>
+        </div>
+      </div>
+      <a href="javascript:;" class="next">下一页
+        <span class="arrow right-arrow"></span>
+      </a>
+    </div>
+    <div class="label-indicator-modal">
+      <span class="preloader preloader-white"></span>
+    </div>
+    <div class="no-data">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无数据</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+  var listBody = require('../components/label-list-scroll.html');
+
+  var loading = false;
+  var pageSize = 30;
+  var inputParentWidth = 0;
+
+  module.exports = {
+    refs: {
+      mark: {
+        el: '#markBody',
+        component: listBody,
+      },
+      noMark: {
+        el: '#noMarkBody',
+        component: listBody,
+      },
+    },
+    listen: {
+      mount: function () {
+        var _this = this;
+
+        // 首次加载数据，将上一页置灰
+        this.$('.prev').addClass('disabled');
+
+        // 页面加载时请求数据
+        $.ajax({
+          data: {
+            gardenId: encodeURIComponent(coala.gardenCoordinate.id),
+            // gardenId: coala.gardenCoordinate.id,
+            personId: coala.personId,
+            currentPage: 1,
+            pageSize: pageSize
+          },
+          url: config.apiUrl + 'getBuildingCoordinates'
+        }).done(function (result) {
+          if (result.code === 'C0000') {
+            var resultData = result.data;
+
+            // 处理数据
+            _this.noMarkList = resultData.noMarkList;
+            _this.markList = resultData.markList;
+            _this.noMarkPageCount = Math.ceil(resultData.noMarkCount / pageSize);
+            _this.markPageCount = Math.ceil(resultData.markCount / pageSize);
+
+            _this.$('#noMarkCount').text(resultData.noMarkCount);
+            _this.$('#markCount').text(resultData.markCount);
+
+            _this.parent.refs.map.renderMarker(resultData.markList);
+
+            var $noMarkScroll = _this.$('#noMarkScroll');
+            var $markScroll = _this.$('#markScroll');
+
+            inputParentWidth = _this.$('#noMarkPicker').parent().width();
+
+            // 当存在未标注的楼栋时，默认定位到未标注页签，当不存在未标注楼栋时，直接选中已标注
+            if (!resultData.noMarkList.length) {
+
+              // 未标注数据为空
+              _this.curTab = 'markScroll';
+              _this.$('#noMarkBody').remove();
+              $noMarkScroll.find('.pagination').remove();
+              $noMarkScroll.find('.no-data').show();
+              _this.$('.active').removeClass('active').next().addClass('active');
+              // document.getElementById('markScrollTab').click();
+            } else {
+              var $noMarkPicker = _this.$('#noMarkPicker');
+              var $noMarkTextWidth = _this.$('#noMarkTextWidth');
+              _this.initPicker($noMarkPicker, $noMarkScroll, resultData.noMarkCount, _this.noMarkPageCount);
+              _this.refs.noMark.render();
+
+              // 计算分页 input 宽度，让 input 框文字居中显示
+              $noMarkTextWidth.text(_this.noMarkPageCount + '/' + _this.noMarkPageCount);
+              $noMarkPicker.css('width', (inputParentWidth  + $noMarkTextWidth.width()) / 2 + 'px');
+            }
+
+            if (!resultData.markList.length) {
+
+              // 已标注数据为空
+              _this.$('#markBody').remove();
+              $markScroll.find('.pagination').remove();
+              $markScroll.find('.no-data').show();
+            } else {
+              var $markPicker = _this.$('#markPicker');
+              var $markTextWidth = _this.$('#markTextWidth');
+              _this.initPicker($markPicker, $markScroll, resultData.markCount, _this.markPageCount, true);
+
+              // 渲染标注的数据时传入 true
+              _this.refs.mark.render(true);
+
+              // 计算分页 input 宽度，让 input 框文字居中显示
+              $markTextWidth.text(_this.markPageCount + '/' + _this.markPageCount);
+              $markPicker.css('width', (inputParentWidth + $markTextWidth.width()) / 2 + 'px');
+            }
+          } else {
+            $.toast(result.msg);
+          }
+        });
+
+        $(document).on('click.listItem', '#markScroll tr', function (e) {
+          _this.$('#item' + _this.parent.refs.map.curBuildId.substring(5)).removeClass('cur');
+          $(e.currentTarget).addClass('cur');
+
+          // 关联地图楼盘选中 id为itemXXXX
+          _this.findMapBuild($(e.currentTarget)[0].id.substring(4));
+        });
+      },
+
+      unmount: function () {
+        $(document).off('click.listItem');
+      }
+    },
+    mixins: {
+      fetchParams: {
+        // 接口 getBuildingCoordinates 中的 currentPage 为1，接口 getBuildingCoordinateByMark 中的 currentPage 从 2 开始
+        currentPage: 1,
+
+        // 是否标注
+        isMark: false,
+        pageSize: pageSize
+      },
+      pageSize: pageSize, // 给 map 组件使用
+      markPageCount: 0, // 标注总页数
+      noMarkPageCount: 0, // 未标注总页数
+      markCurrentPage: 1, // 标注当前页
+      noMarkCurrentPage: 1, // 未标注当前页
+      markList: [], // 标注当前页拿到的数据
+      noMarkList: [], // 未标注当前页拿到的数据
+      curTab: 'noMarkScroll', // 当前选中的页签
+
+      fetch: function () {
+        if (loading) {
+          return;
+        }
+        loading = true;
+
+        var _this = this;
+        var curTab = this.curTab;
+        var $curLoading;
+
+        this.fetchParams.gardenId = encodeURIComponent(coala.gardenCoordinate.id);
+        // this.fetchParams.gardenId = coala.gardenCoordinate.id;
+        this.fetchParams.personId = coala.personId;
+
+        if (curTab === 'noMarkScroll') {
+          this.fetchParams.isMark = false;
+          this.fetchParams.currentPage = this.noMarkCurrentPage;
+          $curLoading = this.$('#noMarkScroll').find('.label-indicator-modal');
+        } else {
+          this.fetchParams.isMark = true;
+          this.fetchParams.currentPage = this.markCurrentPage;
+          $curLoading = this.$('#markScroll').find('.label-indicator-modal');
+        }
+
+        this.pageAjax = $.ajax({
+          data: _this.fetchParams,
+          url: config.apiUrl + 'getBuildingCoordinateByMark',
+          beforeSend: function () {
+            $curLoading.show();
+          }
+        });
+        this.pageAjax.done(function (result) {
+          // 重置加载flag
+          loading = false;
+
+          $curLoading.hide();
+
+          if (result.code === 'C0000') {
+            // 处理数据
+            if (curTab === 'noMarkScroll') {
+              _this.noMarkList = result.data;
+              _this.refs.noMark.render();
+
+            } else {
+              _this.markList = result.data;
+              // 渲染标注的数据时传入 true
+              _this.refs.mark.render(true);
+              _this.parent.refs.map.renderMarker(result.data);
+            }
+          } else {
+            $.toast(result.msg);
+          }
+        });
+      },
+      getPages: function (count) {
+        // 生成分页数
+        var pageArray = [];
+        var pageTotal = Math.ceil(count / pageSize);
+        for (var i = 1; i <= pageTotal; i++) {
+          pageArray.push(i + '/' + pageTotal);
+        }
+        return pageArray;
+      },
+      findMapBuild: function (id) {
+        // 列表某一项点击时关联地图上的对应 marker
+        var map = this.parent.refs.map;
+        var $build = map.$('#build' + id);
+        var data = $build.data();
+        var $markWrapper = $build.parent();
+        map.bMap.panTo(new BMap.Point(data.lng, data.lat));
+        if (map.curBuildId.length) {
+          map.prevBuildId = map.curBuildId;
+          var $prevBuild = map.$('#' + map.curBuildId);
+          var $prevMarkWrapper = $prevBuild.parent();
+          $prevBuild.removeClass('cur');
+          $prevMarkWrapper.css('z-index', $prevMarkWrapper.data('mapzindex'));
+        }
+        $build.addClass('cur');
+        map.curBuildId = 'build' + id;
+        $markWrapper.data('mapzindex', $markWrapper.css('z-index'));
+        $markWrapper.css('z-index', 4);
+      },
+      initPicker: function ($picker, $scroll, labelCount, pageCount, isMark) {
+        // 初始化分页插件
+        var _this = this;
+        $picker.val('1/' + pageCount);
+
+        // 只有一页
+        if (pageCount === 1) {
+          $scroll.find('.next').addClass('disabled');
+        } else {
+          // 不止一页时设置分页的picker
+          $picker.picker({
+            toolbarTemplate: '<header class="bar bar-nav">\
+            <button class="button button-link pull-right close-picker">确定</button>\
+            <h1 class="title">选择分页</h1>\
+            </header>',
+            cols: [{
+              textAlign: 'center',
+              values: _this.getPages(labelCount)
+            }],
+            onClose: function () {
+              var currentPage = isMark ? _this.markCurrentPage : _this.noMarkCurrentPage;
+              var inputVal = parseInt($picker.val().split('/')[0], 10);
+              if (currentPage === inputVal) {
+                return;
+              }
+
+              isMark ? _this.markCurrentPage = currentPage = inputVal : _this.noMarkCurrentPage = currentPage = inputVal;
+              currentPage === 1 ? $scroll.find('.prev').addClass('disabled') : $scroll.find('.prev').removeClass('disabled');
+              pageCount === currentPage ? $scroll.find('.next').addClass('disabled') : $scroll.find('.next').removeClass('disabled');
+              _this.fetch();
+            },
+            onOpen: function () {
+              var currentPage = isMark ? _this.markCurrentPage : _this.noMarkCurrentPage;
+              $picker.val(currentPage+ '/' + pageCount);
+
+              // 每次打开picker时，需要跟当前所在页关联
+              $('.picker-modal').find('.picker-item').eq(currentPage - 1).addClass('picker-selected')
+                .siblings().removeClass('picker-selected');
+              $('.picker-items-col-wrapper').css('transform', 'translate3d(0px, ' + (90 - 36 * (
+                currentPage - 1) + 11) + 'px, 0px)');
+            }
+          });
+        }
+      }
+    },
+    events: {
+      'click #tabTitleWrap a': 'changeTab',
+      'click .prev': 'prev',
+      'click .next': 'next'
+    },
+    handle: {
+      changeTab: function (e) {
+        // 切换页签时，前一页签接口请求中止
+        this.pageAjax && this.pageAjax.abort();
+        loading = false;
+
+        if ($(e.currentTarget).data('id') === 'noMarkScroll') {
+          this.curTab = 'noMarkScroll';
+        } else {
+          this.curTab = 'markScroll';
+        }
+      },
+      next: function (e) {
+        var $cur = $(e.currentTarget);
+        if ($cur.hasClass('disabled')) {
+          return;
+        }
+
+        if (this.curTab === 'noMarkScroll') {
+          // 把上一页设为可点
+          this.noMarkCurrentPage === 1 && $cur.parent().find('.prev').removeClass('disabled');
+
+          this.noMarkCurrentPage += 1;
+
+          this.$('#noMarkPicker').val(this.noMarkCurrentPage + '/' + this.noMarkPageCount);
+
+          // 最后一页时，下一页按钮禁用
+          (this.noMarkPageCount === this.noMarkCurrentPage) && $cur.addClass('disabled');
+        } else {
+          // 把上一页设为可点
+          this.markCurrentPage === 1 && $cur.parent().find('.prev').removeClass('disabled');
+          this.markCurrentPage += 1;
+
+          this.$('#markPicker').val(this.markCurrentPage + '/' + this.markPageCount);
+
+          // 最后一页时，下一页按钮禁用
+          (this.markPageCount === this.markCurrentPage) && $cur.addClass('disabled');
+        }
+
+        this.fetch();
+      },
+      prev: function (e) {
+        var $cur = $(e.currentTarget);
+
+        if ($cur.hasClass('disabled')) {
+          return;
+        }
+        $cur.parent().find('.next').removeClass('disabled');
+        if (this.curTab === 'noMarkScroll') {
+          // 把下一页设为可点
+          this.noMarkCurrentPage === 1 && $cur.parent().find('.prev').removeClass('disabled');
+          this.noMarkCurrentPage -= 1;
+          this.$('#noMarkPicker').val(this.noMarkCurrentPage + '/' + this.noMarkPageCount);
+          (this.noMarkCurrentPage === 1) && $cur.addClass('disabled');
+
+        } else {
+          // 把下一页设为可点
+          this.markCurrentPage === 1 && $cur.parent().find('.prev').removeClass('disabled');
+          this.markCurrentPage -= 1;
+          this.$('#markPicker').val(this.markCurrentPage + '/' + this.markPageCount);
+          (this.markCurrentPage === 1) && $cur.addClass('disabled');
+        }
+        this.fetch();
+      }
+    }
+  }
+</script>
+<style scoped>
+  .label-indicator-modal {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    padding: 0.4rem;
+    margin-left: -1.25rem;
+    margin-top: -1.25rem;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 11000;
+    border-radius: 0.25rem;
+  }
+
+  .label-tabs {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+  }
+
+  .label-tabs .tab {
+    position: relative;
+    -webkit-flex: 1;
+    flex: 1;
+    width: 100%;
+  }
+
+  .label-tabs .tab.active {
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .label-tabs-content {
+    padding-top: 0.85rem;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .scroll-loading {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+    -webkit-justify-content: center;
+    -webkit-align-items: center;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .label-tabs-content .tabs-table {
+    table-layout: fixed;
+    position: relative;
+  }
+
+  .label-tabs-content tr:nth-child(odd) {
+    background-color: #f7f7f7;
+  }
+
+  .label-tabs-content tr.cur {
+    background-color: #f91;
+  }
+
+  .label-tabs-content td {
+    height: 2.5rem;
+    vertical-align: middle;
+    color: #1c1c20;
+    font-size: 0.7rem;
+  }
+
+  .label-tabs-content td:first-child {
+    padding-left: 2rem;
+  }
+
+  .label-tabs-content .title-label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .label-tabs-content .order-label {
+    width: 2rem;
+    box-sizing: content-box;
+  }
+
+  .label-tabs-content tr.cur .title-label,
+  .label-tabs-content tr.cur .order-label {
+    color: #fff;
+  }
+
+  .label-tabs-content .btn-label-wrap {
+    width: 5.775rem;
+    padding-right: 1.875rem;
+    text-align: right;
+  }
+
+  .label-tabs-content .btn-label {
+    display: inline-block;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    width: 3.9rem;
+    text-align: center;
+    color: #1c1c20;
+    border-radius: 0.75rem;
+    background-color: #fff;
+    border: 1px solid #dfdfdf;
+  }
+
+  .no-data {
+    display: none;
+    color: #a6a6a6;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .no-data img {
+    height: 8rem;
+  }
+
+  .pagination {
+    display: -webkit-flex;
+    display: flex;
+    line-height: 1.5rem;
+    margin-bottom: 0.4rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    background-color: #ececec;
+  }
+
+  .pagination a {
+    color: #333;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .pagination .num {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 1;
+    flex: 1;
+  }
+
+  .pagination input {
+    width: 50%;
+    padding: 0 0.3rem 0 0;
+    text-align: right;
+    background-color: #ececec;
+    border: none;
+  }
+
+  .pagination .bottom-arrow-wrap {
+    flex: 1;
+    text-align: left;
+  }
+
+  .pagination .bottom-arrow {
+    position: relative;
+    top: -3px;
+    display: inline-block;
+    width: 0;
+    height: 0;
+    content: '';
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #999;
+  }
+
+  .pagination .arrow {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-width: 1px 0 0 1px;
+    border-style: solid;
+    border-color: #666;
+  }
+
+  .pagination .arrow.left-arrow {
+    transform: rotate(-45deg);
+  }
+
+  .pagination .arrow.right-arrow {
+    transform: rotate(135deg);
+  }
+
+  .pagination .disabled {
+    color: #bababa;
+  }
+
+  .pagination .disabled .arrow {
+    border-color: #bababa;
+  }
+
+  .text-width {
+    position: absolute;
+    visibility: hidden;
+  }
+</style>

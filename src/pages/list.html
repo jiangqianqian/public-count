@@ -1,0 +1,540 @@
+<div class="page page-current">
+  <header class="bar bar-nav">
+    <div class="buttons-tab ">
+      <a href="#tab1" class="tab-link{{?data.tabIndex == 1}} active{{?}} button">列表</a>
+      <a href="#tab2" class="tab-link{{?data.tabIndex == 2}} active{{?}} button">地图</a>
+    </div>
+  </header>
+  <div id="contentScroll" class="content infinite-scroll infinite-scroll-bottom" data-distance="50">
+    <div class="tabs">
+      <div id="tab1" class="tab{{?data.tabIndex == 1}} active{{?}}">
+        {{?data.date1}}
+        <div class="list-title">
+          今天<span> ({{!data.date1}}) </span>
+        </div>
+        {{?}}
+        <div id="list1" class="list-body"></div>
+        {{?data.date2}}
+        <div class="list-title">
+          明天<span> ({{!data.date2}}) </span>
+        </div>
+        {{?}}
+        <div id="list2" class="list-body"></div>
+
+      </div>
+      <div id="tab2" class="tab{{?data.tabIndex == 2}} active{{?}}">
+        <div id="listMap">
+        </div>
+      </div>
+    </div>
+    <div class="infinite-scroll-preloader scroll-loading">
+      <div class="preloader"></div>
+    </div>
+    <div class="infinite-scroll-preloader nomore-data">
+      没有更多数据了
+    </div>
+    <div class="infinite-scroll-preloader no-data">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无任何派单</div>
+    </div>
+  </div>
+  <div class="warn" style="display: {{=data.showWarn && !data.closeWarn ? 'block' : 'none'}};"><b>!</b>表示和您现在的已有待拍摄订单有时间冲突<span id="closeWarn">&times;</span></div>
+  <nav id="nav" class="bar bar-tab"></nav>
+
+  <div class="popup popup-layer">
+    <div class="layer-header">万科金域蓝湾 ( <span>3</span> )</div>
+    <div id="layerScroll" class="layer-content content infinite-scroll infinite-scroll-bottom" data-distance="50">
+      <div id="mapList"></div>
+      <div class="infinite-scroll-preloader scroll-loading">
+        <div class="preloader"></div>
+      </div>
+      <div class="infinite-scroll-preloader nomore-data">
+        没有更多数据了
+      </div>
+    </div>
+    <a href="javascript:;" class="button button-fill button-cancel">取 消</a>
+  </div>
+
+</div>
+
+<script>
+  var coala = require('coala')
+  var BMapLib = require('../assets/vendor/RichMarker')
+  var config = require('../utils/config')
+  var list = require('../components/list.html')
+
+  module.exports = {
+    data: {showWarn: false},
+    refs: {
+      nav: {
+        el: '#nav',
+        component: require('../components/nav.html')
+      },
+      list1: {
+        el: '#list1',
+        component: list,
+        data: {items: [], showDate: false}
+      },
+      list2: {
+        el: '#list2',
+        component: list,
+        data: {items: [], showDate: false}
+      },
+    },
+
+    listen: {
+      mount: function () {
+        coala.setTitle('实勘派单')
+        if (this.data.tabIndex == '2') {
+          var _this = this
+          this.fetchMapDataList()
+        } else {
+          this.refresh()
+          this.$('#contentScroll').on('infinite', this.loadmore.bind(this))
+        }
+      },
+
+      updated: function() {
+        if (!this.fetched) return
+        if (this.refs.list1.data.items.length || this.refs.list2.data.items.length) {
+          if (this.fetchParams.page < this.data.pageCount) {
+            this.$('#contentScroll .no-data').hide()
+            this.$('#contentScroll .scroll-loading').show()
+            this.$('#contentScroll .nomore-data').hide()
+          } else {
+            this.$('#contentScroll .scroll-loading').hide()
+            if (this.loaded) this.$('#contentScroll .nomore-data').show()
+          }
+        } else {
+          this.$('#contentScroll .scroll-loading').hide()
+          this.$('#contentScroll .no-data').show()
+        }
+      }
+    },
+
+    mixins: {
+
+      fetchParams: {
+        personId: coala.personId,
+        page: 1,
+        pageSize: 10
+      },
+
+      fetch: function() {
+        var _this = this
+        return $.ajax({
+          data: _this.fetchParams,
+          url: config.apiUrl + 'getAppointmentBills'
+        })
+      },
+
+      refresh: function() {
+        var _this = this
+        this.loaded = false
+        this.fetchParams.page = 1
+        this.fetch().done(function(result) {
+          if (result.code == 'C0000') {
+            if (result.data.todayData && result.data.todayData.items.length) {
+              var d1 = new Date(result.data.todayData.date)
+              _this.data.date1 = d1.getMonth() + 1 + '月' + d1.getDate() + '日'
+              _this.refs.list1.data.items = result.data.todayData.items
+              if (_this.data.tabIndex == '1' && _this.refs.list1.data.items.length) {
+                for (var i = 0; i < _this.refs.list1.data.items.length; i++) {
+                  if (_this.refs.list1.data.items[i].isConflictTime) {
+                    _this.data.showWarn = true
+                    break;
+                  }
+                }
+              }
+            }
+            if (result.data.tomorrowData && result.data.tomorrowData.items.length) {
+              var d2 = new Date(result.data.tomorrowData.date)
+              _this.data.date2 = d2.getMonth() + 1 + '月' + d2.getDate() + '日'
+              _this.refs.list2.data.items = result.data.tomorrowData.items
+              if (_this.data.tabIndex == '1' && _this.refs.list2.data.items.length) {
+                for (var i = 0; i < _this.refs.list2.data.items.length; i++) {
+                  if (_this.refs.list2.data.items[i].isConflictTime) {
+                    _this.data.showWarn = true
+                    break;
+                  }
+                }
+              }
+            }
+            _this.fetched = true
+            _this.data.pageCount = result.data.pageCount
+            _this.update()
+          } else {
+            $.toast(result.msg)
+          }
+          _this.$('.content.infinite-scroll').scrollTop(0)
+        })
+      },
+
+      fetchMapDetailParams: {
+        personId: coala.personId,
+        page: 1,
+        pageSize: 5
+      },
+
+      fetchMapDataList: function() {
+        var _this = this
+        $.ajax({
+          data: {
+            personId: coala.personId
+          },
+          url: config.apiUrl + 'getReceiveMapData'
+        }).done(function(result) {
+          if (result.code == 'C0000') {
+            _this.renderMap(result.data.items)
+          } else {
+            $.toast(result.msg)
+          }
+        })
+      },
+
+      fetchMapDataDetail: function() {
+        var _this = this
+        return $.ajax({
+          data: _this.fetchMapDetailParams,
+          url: config.apiUrl + 'getAppointmentBillListForMap'
+        })
+      },
+
+      loadmoreMapDetail: function() {
+        var _this = this
+        var $isb = this.$('#layerScroll')
+        $.detachInfiniteScroll($isb)
+        if (this.fetchMapDetailParams.page >= this.mapList.data.pageCount) {
+          return
+        }
+        this.loaded = true
+        this.fetchMapDetailParams.page++
+        this.fetchMapDataDetail().done(function(result) {
+          if (result.code == 'C0000') {
+            _this.mapList.data.items = _this.mapList.data.items.concat(result.data.data)
+            _this.mapList.data.pageCount = result.data.pageCount
+            _this.mapList.update()
+            $.attachInfiniteScroll($isb)
+          }
+        })
+      },
+
+      loadmore: function() {
+        var _this = this
+        var $isb = this.$('#contentScroll')
+        $.detachInfiniteScroll($isb)
+        if (this.fetchParams.page >= this.data.pageCount) {
+          this.$('#contentScroll .scroll-loading').hide()
+          if (this.loaded) this.$('#contentScroll .nomore-data').show()
+          return
+        }
+        this.loaded = true
+        this.fetchParams.page++
+        this.fetch().done(function(result) {
+          if (result.code == 'C0000') {
+            if (result.data.todayData && result.data.todayData.items.length) {
+              var d1 = new Date(result.data.todayData.date)
+              _this.data.date1 = d1.getMonth() + 1 + '月' + d1.getDate() + '日'
+              _this.refs.list1.data.items = _this.refs.list1.data.items.concat(result.data.todayData.items)
+              if (_this.data.tabIndex == '1' && _this.refs.list1.data.items.length) {
+                for (var i = 0; i < _this.refs.list1.data.items.length; i++) {
+                  if (_this.refs.list1.data.items[i].isConflictTime) {
+                    _this.data.showWarn = true
+                    break;
+                  }
+                }
+              }
+            }
+            if (result.data.tomorrowData && result.data.tomorrowData.items.length) {
+              var d2 = new Date(result.data.tomorrowData.date)
+              _this.data.date2 = d2.getMonth() + 1 + '月' + d2.getDate() + '日'
+              _this.refs.list2.data.items = _this.refs.list2.data.items.concat(result.data.tomorrowData.items)
+              if (_this.data.tabIndex == '1' && _this.refs.list2.data.items.length) {
+                for (var i = 0; i < _this.refs.list2.data.items.length; i++) {
+                  if (_this.refs.list2.data.items[i].isConflictTime) {
+                    _this.data.showWarn = true
+                    break;
+                  }
+                }
+              }
+            }
+
+            _this.data.pageCount = result.data.pageCount
+            _this.update()
+            $.attachInfiniteScroll($isb)
+          }
+        })
+      },
+
+      renderMap: function(list) {
+        var _this = this
+        this.$('#contentScroll .scroll-loading').hide()
+        if (list && list.length) {
+          this.bMap = config.initMap({el: 'listMap'})
+          var points = []
+          $.each(list, function(i, item) {
+            var html = '<label class="bmap-label" unselectable="on"><span>' + item.appointmentNum + '</span>' + item.gardenName + '</label>'
+            var point = new BMap.Point(item.gardenLongitude, item.gardenLatitude)
+            points.push(point)
+            var marker = new BMapLib.RichMarker(html, point)
+            marker.addEventListener('onclick', _this.handleMarker.bind(_this, item));
+            _this.bMap.addOverlay(marker)
+          })
+          this.bMap.setViewport(points)
+        } else {
+          // $.toast('暂无任何派单！')
+          this.$('#listMap').append($('.no-data'))
+          this.$('#listMap .no-data').show()
+        }
+      },
+
+      handleMarker: function (item, e) {
+        var _this = this
+        this.$('.bmap-label.active').removeClass('active')
+        $(e.target.U).find('.bmap-label').addClass('active')
+        _this.$('.layer-content.infinite-scroll').scrollTop(0)
+        $.showIndicator()
+        _this.fetchMapDetailParams.page = 1
+
+        _this.fetchMapDetailParams.gardenId = item.gardenId
+        this.fetchMapDataDetail().done(function(result) {
+          if (result.code == 'C0000') {
+            _this.$('.popup-layer .layer-header').html(item.gardenName + ' ( <span>' + item.appointmentNum + '</span> )')
+            $.popup('.popup-layer')
+            if (_this.mapList) _this.mapList.unmount()
+            _this.mapList = coala.component(list)
+            _this.mapList.data = {items: result.data.data}
+            _this.mapList.data.pageCount = result.data.pageCount
+            _this.mapList.data.showDate = true
+
+            _this.mapList.on('mount', function() {
+              _this.$('#layerScroll').on('infinite', _this.loadmoreMapDetail.bind(_this))
+              $.initInfiniteScroll('#layerScroll');
+              $.hideIndicator()
+              _this.loaded = false
+              _this.$('#layerScroll .nomore-data').hide()
+            })
+
+            _this.mapList.on('updated', function() {
+              if (this.data.items.length) {
+                if (_this.fetchMapDetailParams.page < this.data.pageCount) {
+                  _this.$('#layerScroll .scroll-loading').show()
+                  _this.$('#layerScroll .nomore-data').hide()
+                } else {
+                  _this.$('#layerScroll .scroll-loading').hide()
+                  if (_this.loaded) _this.$('#layerScroll .nomore-data').show()
+                }
+              } else {
+                _this.$('#layerScroll .scroll-loading').hide()
+              }
+            })
+            _this.mapList.mount(_this.es + ' #mapList')
+            _this.mapList.parent = _this
+          }
+        })
+      }
+    },
+
+    events: {
+      'click .tab-link': 'hashTab',
+      'click #closeWarn': 'closeWarn',
+      'click .button-cancel': 'closeMapList'
+    },
+
+    handle: {
+      hashTab: function(e) {
+        var tab = $(e.target).attr('href').replace('#', '')
+        coala.cr.go('/list/' + tab)
+      },
+
+      closeWarn: function(e) {
+        this.$('.warn').hide()
+        this.data.closeWarn = true
+      },
+
+      closeMapList: function()  {
+        this.$('.layer-content.infinite-scroll').scrollTop(0)
+        this.$('.bmap-label.active').removeClass('active')
+        $.closeModal('.popup')
+      }
+    }
+  }
+</script>
+
+<style scoped>
+  .bar {
+    padding: 0;
+  }
+
+  .bar .button {
+    line-height: 2.2rem;
+    height: 2.2rem;
+    top: 0;
+  }
+
+  .content {
+    margin-bottom: 2.5rem;
+  }
+
+  .list-title {
+    height: 1.5rem;
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #2e2e2e;
+    box-shadow: 0 1px 0 #dddddd;
+    background-color: #efeff4;
+  }
+
+  .list-title span {
+    color: #b8b8b9;
+  }
+
+  #tab2 #listMap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .bmap-label {
+    background:#25ae5f;;
+    color: #ffffff;
+    padding: 0.2rem 0.5rem;
+    position: absolute;
+    display: inline;
+    cursor: inherit;
+    border: 0px none;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-size: 0.6rem;
+    font-weight: 400;
+    z-index: 80;
+    left: 15px;
+    top: -35px;
+    -moz-user-select: none;
+  }
+
+  .bmap-label span {
+    font-weight: 700;
+    margin-right: 0.5rem;
+  }
+
+  .bmap-label:after {
+    content:"";
+    position:absolute;
+    top:1.2rem;
+    left:0.5rem;
+    border: 0.3rem solid transparent;
+    border-top-color: #25ae5f;
+  }
+
+  .bmap-label.active {
+    background:#ff9911;;
+  }
+
+  .bmap-label.active:after {
+    border-top-color: #ff9911;
+  }
+
+  .warn {
+    position: fixed;
+    bottom: 2.5rem;
+    width: 100%;
+    height: 1.25rem;
+    background-color: #ffcc99;
+    color: #000000;
+    font-size: 0.6rem;
+    line-height: 1.25rem;
+    padding-left: 0.5rem;
+    font-weight: 400;
+    clear: both;
+    z-index: 16;
+  }
+
+  .warn b {
+    font-size: 0.65rem;
+    font-weight: 900;
+    margin-right: 0.2rem;
+    color: #ff0000;
+  }
+
+  .warn span {
+    float: right;
+    font-size: 1rem;
+    line-height: 1rem;
+    padding: 0 0.5rem 0.2rem 0.5rem;
+    color: #666666;
+  }
+
+  .popup-layer {
+    height: 12.5rem;
+    top: initial;
+    bottom: 0;
+    z-index: 9;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+  }
+
+  .popup-layer .layer-header {
+    font-size: 0.75rem;
+    line-height: 0.75rem;
+    color: #2e2e2e;
+    background: #efeff4;
+    font-weight: 400;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .popup-layer .layer-header span {
+    color: #ff9911;
+    font-weight: 700;
+  }
+
+  .popup-layer .layer-content {
+    height: 8.5rem;
+  }
+
+  .layer-content.content {
+    margin-bottom: initial;
+    position: initial;
+  }
+
+  .popup-layer .button-cancel {
+    height: 2rem;
+    line-height: 2rem;
+    background-color: #ff9911;
+    border-color: #ff9911;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 400;
+    margin: 0.5rem 0 0 0;
+    border-radius: 0;
+  }
+
+  .nomore-data, .no-data {
+    display: none;
+    color: #a6a6a6;
+    font-size: 0.75rem;
+  }
+
+  .no-data {
+    margin-top: 4rem;
+  }
+
+  .no-data img {
+    height: 8rem;
+  }
+
+  #mapList .item-info {
+    padding-top: 0.3rem !important;
+    text-align: right;
+  }
+
+  #mapList .item-time {
+    margin-bottom: 0.1rem;
+    margin-right: 0;
+    display: inline-block;
+  }
+</style>

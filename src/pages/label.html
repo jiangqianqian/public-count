@@ -1,0 +1,73 @@
+<div class="page page-current">
+  <div class="content">
+    <div class="map-container" id="labelMap">
+    </div>
+    <div class="label-list" id="labelList"></div>
+  </div>
+</div>
+
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+
+  module.exports = {
+    refs: {
+      map: {
+        el: '#labelMap',
+        component: require('../components/label-map.html'),
+      },
+      list: {
+        el: '#labelList',
+        component: require('../components/label-list.html'),
+      },
+    },
+    data: {
+      // app.js中获取这个页面的路由信息
+      cname: 'label'
+    },
+    listen: {
+      mount: function () {
+        // 放在微信里的标题
+        coala.setTitle('楼栋标注');
+      }
+    }
+  }
+</script>
+<style scoped>
+  .map-container {
+    position: relative;
+    height: 50%;
+    overflow: hidden;
+  }
+
+  .map-container.expand {
+    height: 100%;
+  }
+
+  .label-list {
+    padding: 0 0.5rem;
+    background-color: #fff;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    height: 50%;
+  }
+
+  .label-list .buttons-row {
+    width: 100%;
+    padding-top: 0.225rem;
+  }
+
+  .label-list .buttons-row .button {
+    height: 1.625rem;
+    line-height: 1.525rem;
+    border-color: #25ae5f;
+    color: #1c1c20;
+  }
+
+  .label-list .buttons-row .button.active {
+    background-color: #25ae5f;
+    color: #fff;
+  }
+</style>

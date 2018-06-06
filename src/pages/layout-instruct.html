@@ -1,0 +1,87 @@
+<div class="page page-current">
+  <div class="content" id="content">
+    {{=data.desc}}
+  </div>
+</div>
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+
+  module.exports = {
+    listen: {
+      mount: function () {
+        var _this = this;
+        coala.setTitle('说明');
+
+        // 请求接口
+        $.ajax({
+          type: 'GET',
+          data: {
+            personId: coala.personId
+          },
+          url: config.layoutUrl + 'getLayoutSetDescription',
+        }).done(function (result) {
+          if (result.code === 'C0000') {
+            _this.data = result.data;
+            console.log(_this.data,'说明')
+            _this.update();
+          } else {
+            $.toast(result.msg);
+          }
+        });
+      }
+    }
+  };
+</script>
+<style scoped>
+  .content {
+    padding: 0.5rem;
+    line-height: 1.2rem;
+    font-size: 0.7rem;
+    background-color: #FFF;
+  }
+
+  /* 重置接口返回数据中带的宽度样式 */
+  .content div,
+  .content ul,
+  .content ol,
+  .content dl,
+  .content li,
+  .content dd,
+  .content dt,
+  .content section,
+  .content span,
+  .content img,
+  .content h1,
+  .content h2,
+  .content h3,
+  .content h4,
+  .content h5,
+  .content h6,
+  .content table,
+  .content tr,
+  .content td,
+  .content tbody,
+  .content th,
+  .content fieldset,
+  .content aside,
+  .content article,
+  .content header,
+  .content footer,
+  .content nav,
+  .content audio,
+  .content video {
+    max-width: 100% !important;
+  }
+
+  .content .content {
+    line-height: initial;
+    font-size: initial;
+    position: initial;
+    overflow: initial;
+  }
+  .content img {
+    display: block;
+    margin: 0 auto;
+  }
+</style>

@@ -1,0 +1,33 @@
+{{~data.layoutSelects :value:index }}
+<div class="detail-main">
+  <div class="img-box-wrap">
+    <div class="img-box">
+      <div class="layout-type layout-type-mounted">
+        <i class="icon icon-guajie"></i>挂接
+      </div>
+      <a href="javascript:;" class="btn-del">删除</a>
+      <img data-src="{{!value.hookHttpUrl}}">
+    </div>
+  </div>
+  <div class="list-block description">
+    <ul>
+      <li class="item-content item-link">
+        <div class="item-inner">
+          <div class="item-title">户型层数：</div>
+          <div class="item-input">
+            <input class="floor-picker" type="text" value="{{=value.layerCn || '一层'}}" readonly>
+          </div>
+        </div>
+      </li>
+      <li class="item-content">
+        <div class="item-inner">
+          <div class="item-title">层高(mm)：</div>
+          <div class="item-input">
+            <input class="js-height" type="number" value="{{!value.layerHeight}}">
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+{{~}}

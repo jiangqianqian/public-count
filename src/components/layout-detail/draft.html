@@ -1,0 +1,140 @@
+<div class="detail-box">
+  <div class="detail-head">
+    <div class="headline">
+      <div class="head-text">
+       户型：
+       <span class="head-layout">{{=data.bedRoom || '0'}}房{{=data.livingRoom || '0'}}厅{{=data.kitChen || '0'}}厨{{=data.bathRoom || '0'}}卫 {{!data.direction}} {{=data.buildArea || '0'}}m²</span>
+      </div>
+       <span class="process-state {{?data.approveStatusEn === 'APPROVED_OK'}}finish{{?}}">{{!data.approveStatusCn}}</span>
+    </div>
+    {{?data.approveStatusEn !== 'WAIT_ASSIGN'}}
+    <div class="draw-number">
+      绘制单号：{{!data.drawNo}}
+      <a href="javascript:;" class="btn-info" id="btnInfo">详情</a>
+    </div>
+    {{?}}
+  </div>
+  {{~data.layoutSelects :value:index }}
+  <div class="detail-main">
+    <div class="img-box-wrap">
+      <div class="img-box js-preview">
+        <div class="layout-type">草稿图</div>
+        <img data-src="{{!value.uploadDraftHttpUrl}}">
+      </div>
+      {{?data.approveStatusEn === 'WAIT_APPROVE' ||
+        data.approveStatusEn === 'APPROVED_OK' ||
+        data.approveStatusEn === 'APPROVED_FAIL'
+      }}
+      <div class="img-box js-preview">
+        <div class="layout-type">绘制图</div>
+        <img data-src="{{!value.drawDraftHttpUrl}}">
+      </div>
+      {{?}}
+    </div>
+    <div class="description">
+      <div class="desc-item">
+        <span class="desc-item-title color-a6a6a6">户型层数：</span>{{!value.layerCn}}
+      </div>
+      <div class="desc-item">
+        <span class="desc-item-title color-a6a6a6">层<span class="desc-gap"></span>高：</span>{{?value.layerHeight}}{{!value.layerHeight}}<span class="color-a6a6a6">&nbsp;mm</span>{{?}}
+      </div>
+      <div class="desc-item remark">
+        <span class="desc-item-title color-a6a6a6">备<span class="desc-gap"></span>注：</span>
+        <div class="remark-inner">
+          {{!value.remark}}
+        </div>
+      </div>
+    </div>
+  </div>
+  {{~}}
+  <div id="tips"></div>
+  {{?data.allowReset}}
+  <a class="btn-reset" id="reset" href="javascript:;">重新设置</a>
+  <div class="fixed-gap"></div>
+  {{?}}
+</div>
+
+<div id="infoBox"></div>
+<script>
+  var coala = require('coala');
+  var config = require('../../utils/config');
+
+  module.exports = {
+    refs: {
+      tips: {
+        el: '#tips',
+        component: require('./tips.html')
+      }
+    },
+    listen: {
+      mount: function () {
+        $.each(this.$('img[data-src]'), function () {
+          var $self = $(this);
+          config.imgLoad($self, $self.data('src'));
+        });
+      }
+    },
+    events: {
+      'click #btnInfo': 'showInfo',
+      'click #reset': 'reset'
+    },
+    handle: {
+      showInfo: function () {
+        var _this = this;
+
+        // 异步挂载户型图绘制单详细信息
+        if (!this.infoMd) {
+          require.ensure([], function () {
+            var info = require('./info.html');
+            _this.infoMd = coala.component(info);
+            _this.infoMd.data.drawNo = _this.data.drawNo;
+            _this.infoMd.parent = _this;
+            _this.infoMd.mount('#infoBox');
+          });
+        } else {
+          this.$('#infoBox').removeClass('dn');
+        }
+      },
+      reset: function () {
+        var _this = this;
+        if (this.reseting) {
+          return;
+        }
+        $.modal({
+          text: '确定要重新设置吗？',
+          buttons: [{
+            text: '取消',
+            onClick: function () { }
+          },
+          {
+            text: '确定',
+            onClick: function () {
+              $.ajax({
+                type: 'POST',
+                data: {
+                  personId: coala.personId,
+                  appointmentId: coala.surveyDetailData.id
+                },
+                url: config.layoutUrl + 'reset',
+                beforeSend: function () {
+                  _this.reseting = true;
+                },
+                complete: function () {
+                  _this.reseting = false;
+                }
+              }).done(function (data) {
+                if (data.code !== 'C0000') {
+                  return;
+                }
+
+                // 跳转到设置户型图页面, 并把已有值带过去
+                coala.layoutDetailData = _this.data;
+                coala.cr.go('/layout-set/from-detail/draft');
+              });
+            }
+          }]
+        });
+      }
+    }
+  }
+</script>

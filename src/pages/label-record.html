@@ -1,0 +1,164 @@
+<div class="page page-current">
+  <div class="content infinite-scroll label-record" id="contentScroll">
+    <div class="list-block">
+      <ul>
+        {{~data.items :item :index}}
+        <li class="item-content">
+          <div class="item-inner">
+            <div class="item-title">
+              {{=item.gardenName}}-{{=item.buildingName}}
+            </div>
+            <div class="item-footer">
+              <span>{{=item.operateTime}}</span>
+              <span>{{=item.operateType}}</span>
+            </div>
+          </div>
+        </li>
+        {{~}}
+      </ul>
+    </div>
+    <div class="infinite-scroll-preloader scroll-loading" id="scrollLoading">
+      <div class="preloader"></div>
+    </div>
+    <div class="nomore-data" id="noMoreData">
+      没有更多数据了
+    </div>
+    <div class="no-data" id="noData">
+      <img class="img" src="assets/img/nodata.png">
+      <div>暂无数据</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var coala = require('coala');
+  var config = require('../utils/config');
+
+  var loading = false;
+  var pageSize = 30;
+
+  module.exports = {
+    data: {
+      items: []
+    },
+    listen: {
+      mount: function () {
+        // 放在微信里的标题
+        coala.setTitle('楼栋标注记录');
+
+        // 首次请求数据
+        this.fetch();
+
+        // 定义无限滚动事件
+        this.$('#contentScroll').on('infinite', this.fetch.bind(this));
+      }
+    },
+    mixins: {
+      fetchParams: {
+        personId: coala.personId,
+        currentPage: 1,
+        pageSize: pageSize
+      },
+      fetch: function () {
+        if (loading) {
+          return;
+        }
+        loading = true;
+
+        var _this = this;
+        $.ajax({
+          data: _this.fetchParams,
+          url: config.apiUrl + 'getMarkCoordinates'
+          // url: 'http://localhost:3003/data'
+        }).done(function (result) {
+          loading = false;
+          if (result.code === 'C0000') {
+            // 无数据情况
+            if (!result.data.length) {
+              $.detachInfiniteScroll(_this.$('#contentScroll'));
+              _this.$('#scrollLoading').hide();
+              if (!_this.data.items.length) {
+                _this.$('#noData').show();
+              } else {
+                // 没有更多数据的展示，因为后端没有给出总页数，所以最后一次请求是无数据情况
+                _this.$('#noMoreData').show();
+              }
+              return;
+            }
+
+            // 处理数据
+            _this.data.items = _this.data.items.concat(result.data);
+            _this.fetchParams.currentPage += 1;
+
+            _this.update();
+
+            if (result.data.length < pageSize) {
+              // 最后一页时
+              $.detachInfiniteScroll(_this.$('#contentScroll'));
+              _this.$('#scrollLoading').hide();
+              _this.$('#noMoreData').show();
+            }
+          } else {
+            $.toast(result.msg);
+          }
+        });
+      }
+    }
+  }
+</script>
+<style scoped>
+  .list-block {
+    margin: 0;
+    font-size: 0.7rem;
+  }
+
+  .list-block .item-inner {
+    display: block;
+  }
+
+  .nomore-data,
+  .no-data {
+    display: none;
+    color: #a6a6a6;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .no-data {
+    margin-top: 4rem;
+  }
+
+  .no-data img {
+    height: 8rem;
+  }
+
+  .nomore-data {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .item-title {
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+
+  .item-footer {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    padding: 0.25rem 0;
+    box-sizing: border-box;
+    color: #999;
+    font-size: 0.75rem;
+  }
+
+  .preloader {
+    margin-top: 0.25rem;
+  }
+</style>
